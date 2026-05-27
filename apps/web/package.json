@@ -1,0 +1,14 @@
+{
+  "name": "@via-farm-lab/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Main web application — 3D digital twin + SCADA dual view. Vite + React + Babylon. Implemented in PR 24 onwards.",
+  "type": "module",
+  "scripts": {
+    "dev": "echo '@via-farm-lab/web — to be implemented in PR 24 (Babylon bootstrap)'",
+    "build": "echo 'pending'",
+    "lint": "echo 'pending'",
+    "typecheck": "echo 'pending'",
+    "test": "echo 'pending'"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@via-farm-lab/sim-bff",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Simulator BFF — Fastify + DuckDB/Postgres + 5 external API surfaces (Console/Backend/Robot/Subscription/Growth). Implemented from PR 17.",
+  "type": "module",
+  "scripts": {
+    "dev": "echo '@via-farm-lab/sim-bff — to be implemented in PR 17 (Fastify scaffold)'",
+    "build": "echo 'pending'",
+    "lint": "echo 'pending'",
+    "typecheck": "echo 'pending'",
+    "test": "echo 'pending'"
+  }
+}

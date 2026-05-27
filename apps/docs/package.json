@@ -1,0 +1,14 @@
+{
+  "name": "@via-farm-lab/docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Documentation site — VitePress. Implemented from PR 40 (simulator spec doc) and grows from there.",
+  "type": "module",
+  "scripts": {
+    "dev": "echo '@via-farm-lab/docs — to be implemented in PR 40'",
+    "build": "echo 'pending'",
+    "lint": "echo 'pending'",
+    "typecheck": "echo 'pending'",
+    "test": "echo 'pending'"
+  }
+}

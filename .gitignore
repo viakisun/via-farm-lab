@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+.vite/
+storybook-static/
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.playwright/
+
+# Environment / secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.secrets/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+*.swo
+
+# Local data / runtime artefacts
+*.duckdb
+*.duckdb.wal
+*.sqlite
+*.sqlite-journal
+.local/
+tmp/
+
+# Large binary assets are tracked via Git LFS — these are local-only
+packages/assets/_raw/
+packages/assets/_cache/
+
+# Sentry source maps (uploaded, not committed)
+.sentryclirc
+
+# Vercel / deployment
+.vercel/
+.wrangler/
+.fly/

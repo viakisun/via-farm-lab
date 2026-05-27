@@ -1,0 +1,13 @@
+{
+  "name": "@via-farm-lab/sim-scenarios",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "lint": "echo '@via-farm-lab/sim-scenarios — pending'",
+    "typecheck": "echo 'pending'",
+    "test": "echo 'pending'"
+  }
+}

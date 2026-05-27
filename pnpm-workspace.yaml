@@ -1,0 +1,35 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"
+
+# Catalog: pinned versions used across workspace packages.
+# Add to a workspace package via `"react": "catalog:"` in dependencies.
+catalog:
+  # React / runtime
+  react: ^19.0.0
+  react-dom: ^19.0.0
+  "@types/react": ^19.0.0
+  "@types/react-dom": ^19.0.0
+
+  # TypeScript
+  typescript: ^5.7.0
+
+  # Node tooling
+  "@types/node": ^22.0.0
+
+  # Babylon (3D)
+  "@babylonjs/core": ^7.0.0
+  "@babylonjs/loaders": ^7.0.0
+  "@babylonjs/inspector": ^7.0.0
+
+  # Fastify (BFF)
+  fastify: ^5.0.0
+  "@fastify/websocket": ^11.0.0
+
+  # Validation
+  zod: ^3.23.0
+
+  # Testing
+  vitest: ^2.1.0
+  "@playwright/test": ^1.49.0

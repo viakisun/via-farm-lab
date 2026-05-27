@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["-F", "@via-farm-lab/web", "dev"],
+      "port": 5173
+    }
+  ]
+}

@@ -2,20 +2,38 @@
   "name": "@via-farm-lab/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Main web application — 3D digital twin + SCADA dual view. Vite + React + Babylon. Implemented in PR 24 onwards.",
+  "description": "Main web application — 3D digital twin (Babylon WebGPU) + SCADA dual view. Persona-aware (operator / visitor / subscriber). Localised en-AU (LOCALISATION.md).",
   "type": "module",
   "scripts": {
-    "dev": "echo '@via-farm-lab/web — to be implemented in PR 24 (Babylon bootstrap)'",
-    "build": "echo 'pending'",
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "@babylonjs/core": "catalog:",
+    "@babylonjs/inspector": "catalog:",
+    "@babylonjs/loaders": "catalog:",
+    "@via-farm-lab/api-contracts": "workspace:*",
+    "@via-farm-lab/i18n": "workspace:*",
+    "@via-farm-lab/telemetry": "workspace:*",
+    "@via-farm-lab/ui": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^5.4.0",
+    "vitest": "catalog:"
   }
 }

@@ -8,7 +8,10 @@
     "dev": "echo '@via-farm-lab/sim-bff — to be implemented in PR 17 (Fastify scaffold)'",
     "build": "echo 'pending'",
     "lint": "echo 'pending'",
-    "typecheck": "echo 'pending'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'pending'"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }

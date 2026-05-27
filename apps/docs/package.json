@@ -8,7 +8,10 @@
     "dev": "echo '@via-farm-lab/docs — to be implemented in PR 40'",
     "build": "echo 'pending'",
     "lint": "echo 'pending'",
-    "typecheck": "echo 'pending'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'pending'"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }

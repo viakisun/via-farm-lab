@@ -4,49 +4,136 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@types/node':
+      specifier: ^22.0.0
+      version: 22.19.19
+    typescript:
+      specifier: ^5.7.0
+      version: 5.9.3
+
 importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
       turbo:
         specifier: ^2.3.0
         version: 2.9.15
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  apps/docs: {}
+  apps/docs:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  apps/sim-bff: {}
+  apps/sim-bff:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  apps/web: {}
+  apps/web:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/api-contracts: {}
+  packages/api-contracts:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/assets: {}
+  packages/assets:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/data: {}
+  packages/data:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/effects: {}
+  packages/effects:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/i18n: {}
+  packages/i18n:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/materials: {}
+  packages/materials:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/persona: {}
+  packages/persona:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/scada: {}
+  packages/scada:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/scene: {}
+  packages/scene:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/sim-core: {}
+  packages/sim-core:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/sim-models: {}
+  packages/sim-models:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/sim-scenarios: {}
+  packages/sim-scenarios:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/telemetry: {}
+  packages/telemetry:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/types: {}
+  packages/types:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/ui: {}
+  packages/ui:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
 packages:
 
@@ -80,9 +167,20 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@types/node@22.19.19':
+    resolution: {integrity: sha512-dyh/xO2Fh5bYrfWaaqGrRQQGkNdmYw6AmaAUvYeUMNTWQtvb796ikLdmTchRmOlOiIJ1TDXfWgVx1QkUlQ6Hew==}
+
   turbo@2.9.15:
     resolution: {integrity: sha512-VpKvD9Z0Hu/xrGUAYX1wnhfpqv835wIwGqeKfulvBPTOcDap0E3nFwyzCAVV85fB1sBcBDEfTP+7FSW7GzwWSQ==}
     hasBin: true
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
 snapshots:
 
@@ -104,6 +202,10 @@ snapshots:
   '@turbo/windows-arm64@2.9.15':
     optional: true
 
+  '@types/node@22.19.19':
+    dependencies:
+      undici-types: 6.21.0
+
   turbo@2.9.15:
     optionalDependencies:
       '@turbo/darwin-64': 2.9.15
@@ -112,3 +214,7 @@ snapshots:
       '@turbo/linux-arm64': 2.9.15
       '@turbo/windows-64': 2.9.15
       '@turbo/windows-arm64': 2.9.15
+
+  typescript@5.9.3: {}
+
+  undici-types@6.21.0: {}

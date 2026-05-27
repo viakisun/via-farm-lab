@@ -8,7 +8,10 @@
     "dev": "echo '@via-farm-lab/web — to be implemented in PR 24 (Babylon bootstrap)'",
     "build": "echo 'pending'",
     "lint": "echo 'pending'",
-    "typecheck": "echo 'pending'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'pending'"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }

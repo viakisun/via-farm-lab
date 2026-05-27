@@ -16,13 +16,16 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "test:e2e": "turbo run test:e2e",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "lint:root": "eslint .",
     "format": "prettier --write . --cache",
     "format:check": "prettier --check . --cache",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e:ui": "playwright test --ui"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
@@ -35,15 +38,19 @@
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "@eslint/js": "catalog:",
+    "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
+    "happy-dom": "catalog:",
     "husky": "catalog:",
     "lint-staged": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-organize-imports": "catalog:",
     "turbo": "^2.3.0",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
   }
 }

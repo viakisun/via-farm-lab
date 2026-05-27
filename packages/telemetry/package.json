@@ -2,19 +2,33 @@
   "name": "@via-farm-lab/telemetry",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "description": "Telemetry — Sentry SDK wrappers (browser + node), Pino structured logging, Web Vitals. Env-toggled (no DSN = console transport).",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts",
+    "./node": "./src/node.ts",
+    "./logger": "./src/logger.ts",
+    "./web-vitals": "./src/web-vitals.ts"
+  },
   "scripts": {
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "@sentry/browser": "catalog:",
+    "@sentry/node": "catalog:",
+    "pino": "catalog:",
+    "pino-pretty": "catalog:",
+    "web-vitals": "catalog:"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

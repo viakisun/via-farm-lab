@@ -1,0 +1,300 @@
+openapi: 3.1.0
+
+info:
+  title: VIAFARM Robot Ops API
+  version: '0.1.0'
+  summary: L3.5 — growth measurement robot fleet (telemetry, scans, commands).
+  description: |
+    Owned by the **Robot Operations Team**. Surfaces the mecanum-wheeled
+    measurement robot to the Digital Twin and operations consoles.
+
+    Phase 1: one robot (`robot-01`).
+    Scan sessions emit per-plot measurements (canopy area, height, colour
+    index) that downstream Growth Analysis interprets. Raw images stored
+    via signed URLs; never inlined.
+  contact:
+    name: Robot Operations
+    email: robotics@viafarm.com.au
+
+servers:
+  - url: https://robot.viafarm.com.au/v1
+    description: Production (Sydney)
+  - url: http://localhost:4003/v1
+    description: Local simulator (twin-bff)
+
+tags:
+  - name: robots
+  - name: commands
+  - name: scans
+  - name: streams
+
+paths:
+  /robots:
+    get:
+      tags: [robots]
+      operationId: listRobots
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Robot' }
+
+  /robots/{robotId}:
+    parameters:
+      - in: path
+        name: robotId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [robots]
+      operationId: getRobot
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Robot' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /robots/{robotId}/command:
+    parameters:
+      - in: path
+        name: robotId
+        required: true
+        schema: { type: string }
+    post:
+      tags: [commands]
+      operationId: postRobotCommand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RobotCommand' }
+      responses:
+        '202':
+          description: Accepted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAck' }
+        '409':
+          description: Conflict (e.g. robot busy / fault).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /robots/{robotId}/scans:
+    parameters:
+      - in: path
+        name: robotId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [scans]
+      operationId: listScanSessions
+      parameters:
+        - in: query
+          name: from
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanSessionPage' }
+
+  /scans/{scanId}:
+    parameters:
+      - in: path
+        name: scanId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [scans]
+      operationId: getScan
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanSession' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /scans/{scanId}/image:
+    parameters:
+      - in: path
+        name: scanId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [scans]
+      operationId: getScanImage
+      summary: Issue a signed URL for the scan image (short TTL).
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, expiresAt]
+                properties:
+                  url: { type: string, format: uri }
+                  expiresAt: { $ref: '#/components/schemas/IsoTimestamp' }
+
+  /stream/robots/{robotId}/telemetry:
+    parameters:
+      - in: path
+        name: robotId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [streams]
+      summary: WebSocket — live telemetry (1 Hz nominal).
+      description: |
+        Server pushes `RobotTelemetry` messages every second.
+        Heartbeats every 30 s. Re-sends current state on connect.
+      responses: { '101': { description: Switching Protocols. } }
+
+components:
+  schemas:
+    IsoTimestamp:
+      type: string
+      format: date-time
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    PlotId:
+      type: string
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+
+    Robot:
+      type: object
+      required: [id, model, status]
+      properties:
+        id: { type: string, example: robot-01 }
+        model: { type: string, example: viafarm-scout-v1 }
+        status:
+          type: string
+          enum: [idle, moving, scanning, charging, fault, offline]
+
+    Pose:
+      type: object
+      required: [x, y, theta]
+      properties:
+        x: { type: number, description: metres, X axis in farm frame }
+        y: { type: number, description: metres, Y axis in farm frame }
+        theta: { type: number, description: yaw radians }
+
+    RobotTelemetry:
+      type: object
+      required: [robotId, t, pose, battery, status]
+      properties:
+        robotId: { type: string }
+        t: { $ref: '#/components/schemas/IsoTimestamp' }
+        pose: { $ref: '#/components/schemas/Pose' }
+        battery:
+          type: object
+          required: [percent]
+          properties:
+            percent: { type: number, minimum: 0, maximum: 100 }
+            chargingW: { type: number, nullable: true }
+        status:
+          type: string
+          enum: [idle, moving, scanning, charging, fault, offline]
+        fault: { type: string, nullable: true }
+
+    RobotCommand:
+      type: object
+      required: [action, actorId]
+      properties:
+        action:
+          type: string
+          enum: [move-to, scan-plot, scan-aisle, pause, resume, home]
+        target: { $ref: '#/components/schemas/Pose' }
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        actorId: { type: string }
+        reason: { type: string }
+
+    CommandAck:
+      type: object
+      required: [commandId, acceptedAt]
+      properties:
+        commandId: { type: string, format: uuid }
+        acceptedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+
+    ScanSession:
+      type: object
+      required: [id, robotId, startedAt, endedAt, plotMeasurements]
+      properties:
+        id: { type: string }
+        robotId: { type: string }
+        startedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        endedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        plotMeasurements:
+          type: array
+          items: { $ref: '#/components/schemas/PlotMeasurement' }
+
+    PlotMeasurement:
+      type: object
+      required: [plotId, capturedAt, canopyAreaCm2, heightCm, colourIndex]
+      properties:
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        capturedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        canopyAreaCm2: { type: number }
+        heightCm: { type: number }
+        colourIndex: { type: number, description: 0..1 greenness proxy }
+        anomalies:
+          type: array
+          items:
+            type: object
+            required: [kind]
+            properties:
+              kind:
+                type: string
+                enum: [pest, disease, nutrient_deficiency, lodging, other]
+              confidence: { type: number, minimum: 0, maximum: 1 }
+
+    ScanSessionPage:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ScanSession' }
+        nextCursor:
+          type: string
+          nullable: true
+        total: { type: integer }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }

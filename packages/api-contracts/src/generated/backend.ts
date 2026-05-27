@@ -154,7 +154,9 @@ export interface paths {
       readonly responses: {
         /** @description Switching Protocols. */
         readonly 101: {
-          headers: Readonly<Record<string, unknown>>;
+          headers: {
+            readonly [name: string]: unknown;
+          };
           content?: never;
         };
       };
@@ -189,7 +191,9 @@ export interface paths {
       readonly responses: {
         /** @description Switching Protocols. */
         readonly 101: {
-          headers: Readonly<Record<string, unknown>>;
+          headers: {
+            readonly [name: string]: unknown;
+          };
           content?: never;
         };
       };
@@ -224,7 +228,9 @@ export interface paths {
       readonly responses: {
         /** @description Switching Protocols. */
         readonly 101: {
-          headers: Readonly<Record<string, unknown>>;
+          headers: {
+            readonly [name: string]: unknown;
+          };
           content?: never;
         };
       };
@@ -361,7 +367,9 @@ export interface components {
   responses: {
     /** @description Standard error response. */
     readonly Error: {
-      headers: Readonly<Record<string, unknown>>;
+      headers: {
+        readonly [name: string]: unknown;
+      };
       content: {
         readonly 'application/json': components['schemas']['ApiError'];
       };
@@ -385,7 +393,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['Sensor'][];
         };
@@ -405,7 +415,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['SensorReading'];
         };
@@ -429,7 +441,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['SensorSeries'][];
         };
@@ -447,7 +461,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['Equipment'][];
         };
@@ -471,7 +487,9 @@ export interface operations {
     readonly responses: {
       /** @description Accepted (asynchronous execution; observe via WS or polling). */
       readonly 202: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['CommandAck'];
         };
@@ -494,7 +512,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['Alarm'][];
         };
@@ -521,7 +541,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['Alarm'];
         };

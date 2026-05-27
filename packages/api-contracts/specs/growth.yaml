@@ -1,0 +1,242 @@
+openapi: 3.1.0
+
+info:
+  title: VIAFARM Growth Analysis API (stub)
+  version: '0.1.0'
+  summary: L3.5 — CV / ML analysis of robot scans (measurements, photos, anomalies).
+  description: |
+    Owned by **Computer Vision / ML team** (future). This is a stub
+    specification used by the Digital Twin simulator in Phase 1 to drive
+    the Subscriber-facing growth photo gallery and ownership overlays.
+    Real implementation arrives in Phase 3.
+
+    The system ingests robot scan images, runs segmentation + measurement
+    pipelines, and produces per-plot time series + curated "featured"
+    photos suitable for subscriber communications.
+  contact:
+    name: CV / ML team (TBC)
+    email: vision@viafarm.com.au
+
+servers:
+  - url: https://growth.viafarm.com.au/v1
+    description: Production (Sydney) — future
+  - url: http://localhost:4005/v1
+    description: Local simulator (twin-bff)
+
+tags:
+  - name: timeline
+  - name: photos
+  - name: anomalies
+  - name: models
+
+paths:
+  /plots/{plotId}/timeline:
+    parameters:
+      - in: path
+        name: plotId
+        required: true
+        schema: { $ref: '#/components/schemas/PlotId' }
+    get:
+      tags: [timeline]
+      summary: Per-plot time series of growth measurements.
+      operationId: getPlotTimeline
+      parameters:
+        - in: query
+          name: from
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: agg
+          schema:
+            type: string
+            enum: [raw, hourly, daily]
+            default: daily
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Timeline' }
+
+  /plots/{plotId}/photos:
+    parameters:
+      - in: path
+        name: plotId
+        required: true
+        schema: { $ref: '#/components/schemas/PlotId' }
+    get:
+      tags: [photos]
+      summary: Featured photos for a plot (signed URLs).
+      operationId: getPlotPhotos
+      parameters:
+        - in: query
+          name: best
+          schema: { type: integer, minimum: 1, maximum: 50, default: 8 }
+          description: How many curated photos to return.
+        - in: query
+          name: from
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/FeaturedPhoto' }
+
+  /anomalies:
+    get:
+      tags: [anomalies]
+      summary: Detected anomalies across the farm.
+      operationId: listAnomalies
+      parameters:
+        - in: query
+          name: from
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: severity
+          schema: { $ref: '#/components/schemas/Severity' }
+        - in: query
+          name: kind
+          schema:
+            type: string
+            enum: [pest, disease, nutrient_deficiency, lodging, other]
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Anomaly' }
+
+  /models:
+    get:
+      tags: [models]
+      summary: CV model versions currently in production.
+      operationId: listModels
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ModelInfo' }
+
+components:
+  schemas:
+    IsoTimestamp:
+      type: string
+      format: date-time
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    PlotId:
+      type: string
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+
+    Severity:
+      type: string
+      enum: [info, warning, critical]
+
+    Timeline:
+      type: object
+      required: [plotId, agg, points]
+      properties:
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        agg:
+          type: string
+          enum: [raw, hourly, daily]
+        points:
+          type: array
+          items: { $ref: '#/components/schemas/TimelinePoint' }
+
+    TimelinePoint:
+      type: object
+      required: [t, canopyAreaCm2, heightCm, colourIndex]
+      properties:
+        t: { $ref: '#/components/schemas/IsoTimestamp' }
+        canopyAreaCm2: { type: number }
+        heightCm: { type: number }
+        colourIndex: { type: number, description: 0..1 greenness proxy }
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Model confidence interval midpoint.
+
+    FeaturedPhoto:
+      type: object
+      required: [photoId, capturedAt, signedUrl, expiresAt, score]
+      properties:
+        photoId: { type: string, format: uuid }
+        capturedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        signedUrl: { type: string, format: uri }
+        expiresAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Curation score (composition + sharpness + plant visibility).
+        caption:
+          type: object
+          properties:
+            'en-AU': { type: string }
+            'ko-KR': { type: string }
+
+    Anomaly:
+      type: object
+      required: [id, plotId, kind, severity, detectedAt, confidence]
+      properties:
+        id: { type: string, format: uuid }
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        kind:
+          type: string
+          enum: [pest, disease, nutrient_deficiency, lodging, other]
+        severity: { $ref: '#/components/schemas/Severity' }
+        detectedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        modelId: { type: string }
+        evidencePhotoId:
+          type: string
+          format: uuid
+          nullable: true
+
+    ModelInfo:
+      type: object
+      required: [id, family, version, releasedAt]
+      properties:
+        id: { type: string, example: canopy-seg-v3 }
+        family:
+          type: string
+          enum: [segmentation, classification, anomaly, scoring]
+        version: { type: string, example: 3.1.2 }
+        releasedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        metrics:
+          type: object
+          additionalProperties: { type: number }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }

@@ -138,7 +138,9 @@ export interface paths {
       readonly responses: {
         /** @description Switching Protocols. */
         readonly 101: {
-          headers: Readonly<Record<string, unknown>>;
+          headers: {
+            readonly [name: string]: unknown;
+          };
           content?: never;
         };
       };
@@ -237,7 +239,9 @@ export interface components {
   responses: {
     /** @description Standard error response. */
     readonly Error: {
-      headers: Readonly<Record<string, unknown>>;
+      headers: {
+        readonly [name: string]: unknown;
+      };
       content: {
         readonly 'application/json': components['schemas']['ApiError'];
       };
@@ -264,7 +268,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['Robot'][];
         };
@@ -284,7 +290,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['Robot'];
         };
@@ -309,14 +317,18 @@ export interface operations {
     readonly responses: {
       /** @description Accepted. */
       readonly 202: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['CommandAck'];
         };
       };
       /** @description Conflict (e.g. robot busy / fault). */
       readonly 409: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['ApiError'];
         };
@@ -341,7 +353,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['ScanSessionPage'];
         };
@@ -361,7 +375,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['ScanSession'];
         };
@@ -382,7 +398,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': {
             /** Format: uri */

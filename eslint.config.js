@@ -29,6 +29,7 @@ export default tseslint.config(
       '**/storybook-static/**',
       '**/e2e/**',
       '**/scripts/**',
+      '**/src/generated/**',
     ],
   },
   js.configs.recommended,

@@ -232,7 +232,9 @@ export interface components {
   responses: {
     /** @description Standard error response. */
     readonly Error: {
-      headers: Readonly<Record<string, unknown>>;
+      headers: {
+        readonly [name: string]: unknown;
+      };
       content: {
         readonly 'application/json': components['schemas']['ApiError'];
       };
@@ -262,7 +264,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['CustomerPage'];
         };
@@ -282,7 +286,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['Customer'];
         };
@@ -304,7 +310,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['Contract'][];
         };
@@ -324,7 +332,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['Contract'];
         };
@@ -342,7 +352,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['PlotAssignment'][];
         };
@@ -362,7 +374,9 @@ export interface operations {
     readonly responses: {
       /** @description OK (assignment may be null = company-internal). */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': components['schemas']['PlotAssignment'];
         };
@@ -382,7 +396,9 @@ export interface operations {
     readonly responses: {
       /** @description OK. */
       readonly 200: {
-        headers: Readonly<Record<string, unknown>>;
+        headers: {
+          readonly [name: string]: unknown;
+        };
         content: {
           readonly 'application/json': readonly components['schemas']['GrowthReport'][];
         };

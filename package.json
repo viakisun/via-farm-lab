@@ -21,13 +21,25 @@
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "lint:root": "eslint .",
     "format": "prettier --write . --cache",
-    "format:check": "prettier --check . --cache"
+    "format:check": "prettier --check . --cache",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix --max-warnings=0 --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx,yaml,yml,css,html}": "prettier --write"
   },
   "devDependencies": {
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
     "@eslint/js": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
+    "husky": "catalog:",
+    "lint-staged": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-organize-imports": "catalog:",
     "turbo": "^2.3.0",

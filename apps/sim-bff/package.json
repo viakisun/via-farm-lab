@@ -20,6 +20,7 @@
     "@fastify/rate-limit": "catalog:",
     "@fastify/websocket": "catalog:",
     "@via-farm-lab/api-contracts": "workspace:*",
+    "@via-farm-lab/sim-core": "workspace:*",
     "@via-farm-lab/telemetry": "workspace:*",
     "fastify": "catalog:",
     "fastify-plugin": "catalog:",
@@ -32,6 +33,7 @@
     "happy-dom": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@types/ws": "catalog:"
   }
 }

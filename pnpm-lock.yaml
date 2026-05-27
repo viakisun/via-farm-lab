@@ -72,6 +72,9 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.0.0
       version: 19.2.3
+    '@types/ws':
+      specifier: ^8.5.0
+      version: 8.18.1
     '@vitest/coverage-v8':
       specifier: ^2.1.0
       version: 2.1.9
@@ -260,6 +263,9 @@ importers:
       '@via-farm-lab/api-contracts':
         specifier: workspace:*
         version: link:../../packages/api-contracts
+      '@via-farm-lab/sim-core':
+        specifier: workspace:*
+        version: link:../../packages/sim-core
       '@via-farm-lab/telemetry':
         specifier: workspace:*
         version: link:../../packages/telemetry
@@ -279,6 +285,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.19.19
+      '@types/ws':
+        specifier: 'catalog:'
+        version: 8.18.1
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 2.1.9(vitest@2.1.9(@types/node@22.19.19)(happy-dom@15.11.7))
@@ -2037,6 +2046,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@typescript-eslint/eslint-plugin@8.60.0':
     resolution: {integrity: sha512-QYb/sa74/s7OKMbACMjrYnGspj9Hs5YI5aaffSL65UfeBUzVzBJfVo3oWSpbzPurvm7yaCCo2Lk7lVj610HqKw==}
@@ -6048,6 +6060,10 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.19.19
 
   '@typescript-eslint/eslint-plugin@8.60.0(@typescript-eslint/parser@8.60.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:

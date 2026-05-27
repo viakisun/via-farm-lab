@@ -2,9 +2,12 @@
   "name": "@via-farm-lab/sim-core",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "description": "Simulator core — deterministic tick loop, time control, snapshot store, seeded RNG. Drives the 8 physics/chemistry/biology models in @via-farm-lab/sim-models.",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -12,9 +15,10 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
+    "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

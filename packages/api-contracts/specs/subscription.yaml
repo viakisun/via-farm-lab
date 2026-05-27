@@ -1,0 +1,291 @@
+openapi: 3.1.0
+
+info:
+  title: VIAFARM Subscription API (stub)
+  version: '0.1.0'
+  summary: L4 ERP — customers, contracts, plot assignments, growth-report delivery.
+  description: |
+    Owned by **Business Development** (future). This is a stub specification
+    used by the Digital Twin simulator to drive the Subscriber persona and
+    plot-ownership overlays in Phase 1. Real implementation is Phase 2.
+
+    Privacy: all customer data is governed by the Australian Privacy Act
+    1988 + APPs (see LOCALISATION.md §5). Sydney data-residency required.
+
+    Endpoints here are read-only for the Digital Twin; write paths exist
+    for future ERP / CRM integrations.
+  contact:
+    name: Business Development (TBC)
+    email: subscriptions@viafarm.com.au
+
+servers:
+  - url: https://subscription.viafarm.com.au/v1
+    description: Production (Sydney) — future
+  - url: http://localhost:4004/v1
+    description: Local simulator (twin-bff)
+
+tags:
+  - name: customers
+  - name: contracts
+  - name: plots
+  - name: reports
+
+paths:
+  /customers:
+    get:
+      tags: [customers]
+      operationId: listCustomers
+      parameters:
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomerPage' }
+
+  /customers/{customerId}:
+    parameters:
+      - in: path
+        name: customerId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [customers]
+      operationId: getCustomer
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Customer' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /contracts:
+    get:
+      tags: [contracts]
+      operationId: listContracts
+      parameters:
+        - in: query
+          name: customerId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [active, paused, ended] }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Contract' }
+
+  /contracts/{contractId}:
+    parameters:
+      - in: path
+        name: contractId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [contracts]
+      operationId: getContract
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contract' }
+
+  /plots:
+    get:
+      tags: [plots]
+      summary: All plots with assignment state (joins Console plots with contracts).
+      operationId: listPlotsWithAssignment
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PlotAssignment' }
+
+  /plots/{plotId}/assignment:
+    parameters:
+      - in: path
+        name: plotId
+        required: true
+        schema: { $ref: '#/components/schemas/PlotId' }
+    get:
+      tags: [plots]
+      operationId: getPlotAssignment
+      responses:
+        '200':
+          description: OK (assignment may be null = company-internal).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlotAssignment' }
+
+  /reports/contracts/{contractId}:
+    parameters:
+      - in: path
+        name: contractId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [reports]
+      summary: Growth reports sent for this contract.
+      operationId: listGrowthReports
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GrowthReport' }
+
+components:
+  schemas:
+    IsoTimestamp:
+      type: string
+      format: date-time
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    PlotId:
+      type: string
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+
+    Customer:
+      type: object
+      required: [id, displayName, email, createdAt, consents]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string, example: Jordan Bell }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true, example: '+61 4xx xxx xxx' }
+        locale:
+          type: string
+          enum: [en-AU, ko-KR]
+          default: en-AU
+        createdAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        consents:
+          type: object
+          required: [privacy, terms, imageUse, marketing]
+          properties:
+            privacy: { type: boolean, description: Privacy Policy accepted. }
+            terms: { type: boolean }
+            imageUse: { type: boolean, description: Plot photos may be used in service comms. }
+            marketing: { type: boolean }
+
+    Contract:
+      type: object
+      required: [id, customerId, status, startedAt, plotIds, plan]
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [active, paused, ended]
+        startedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        endedAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+        plotIds:
+          type: array
+          items: { $ref: '#/components/schemas/PlotId' }
+        plan:
+          type: object
+          required: [code, intervalDays, priceAud]
+          properties:
+            code: { type: string, example: monthly-basic }
+            intervalDays: { type: integer, example: 30 }
+            priceAud: { type: number, example: 35 }
+        preferences:
+          type: object
+          properties:
+            reportFrequencyDays: { type: integer, default: 7 }
+            preferredChannel:
+              type: string
+              enum: [email, sms, app]
+              default: email
+
+    PlotAssignment:
+      type: object
+      required: [plotId, assigned]
+      properties:
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        assigned:
+          type: boolean
+          description: |
+            False = company-internal plot (R&D / demo).
+            True = bound to a contract (customer + contract id below).
+        customerId: { type: string, format: uuid, nullable: true }
+        contractId: { type: string, format: uuid, nullable: true }
+        sinceAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+
+    GrowthReport:
+      type: object
+      required: [id, contractId, plotId, period, generatedAt, deliveredAt, status]
+      properties:
+        id: { type: string, format: uuid }
+        contractId: { type: string, format: uuid }
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        period:
+          type: object
+          required: [fromAt, toAt]
+          properties:
+            fromAt: { $ref: '#/components/schemas/IsoTimestamp' }
+            toAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        generatedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        deliveredAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+        status:
+          type: string
+          enum: [generated, sent, failed, suppressed]
+        featuredPhotoUrls:
+          type: array
+          items: { type: string, format: uri }
+
+    CustomerPage:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Customer' }
+        nextCursor:
+          type: string
+          nullable: true
+        total: { type: integer }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }

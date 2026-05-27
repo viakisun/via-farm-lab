@@ -2,6 +2,7 @@
   "name": "via-farm-lab",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "license": "UNLICENSED",
   "description": "VIAFARM Reinfa Digital Twin — production-grade vertical farm digital twin for the Australian market.",
   "author": "VIAFARM <kisun@viasoft.ai>",
@@ -17,11 +18,20 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "clean": "turbo run clean && rm -rf node_modules .turbo"
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "lint:root": "eslint .",
+    "format": "prettier --write . --cache",
+    "format:check": "prettier --check . --cache"
   },
   "devDependencies": {
+    "@eslint/js": "catalog:",
     "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "catalog:",
     "turbo": "^2.3.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
   }
 }

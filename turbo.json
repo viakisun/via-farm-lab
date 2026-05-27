@@ -1,24 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalDependencies": [
-    ".nvmrc",
-    ".npmrc",
-    ".editorconfig",
-    "tsconfig.base.json"
-  ],
+  "globalDependencies": [".nvmrc", ".npmrc", ".editorconfig", "tsconfig.base.json"],
   "globalPassThroughEnv": ["NODE_ENV", "CI"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**", ".next/**", "!.next/cache/**"],
-      "inputs": [
-        "src/**",
-        "package.json",
-        "tsconfig.json",
-        "vite.config.*",
-        "$TURBO_DEFAULT$"
-      ]
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vite.config.*", "$TURBO_DEFAULT$"]
     },
     "dev": {
       "cache": false,

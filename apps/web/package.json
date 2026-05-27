@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "echo '@via-farm-lab/web — to be implemented in PR 24 (Babylon bootstrap)'",
     "build": "echo 'pending'",
-    "lint": "echo 'pending'",
+    "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo 'pending'"
   },

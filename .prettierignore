@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+.turbo
+.next
+.vite
+coverage
+playwright-report
+test-results
+storybook-static
+pnpm-lock.yaml
+*.tsbuildinfo
+*.min.js
+*.min.css
+packages/assets/_raw
+packages/assets/_cache

@@ -1,0 +1,5 @@
+/* Self-hosted Inter Variable (via @fontsource-variable/inter).
+ * Import this once in the application root.
+ * Korean fallback handled by font-sans token (Noto Sans KR added at the end).
+ */
+@import '@fontsource-variable/inter';

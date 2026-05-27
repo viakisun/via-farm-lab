@@ -1,0 +1,132 @@
+/* via-farm-lab design tokens.
+ * Authoritative source for colour, spacing, typography, radius, motion.
+ * Aligned to LOCALISATION.md §4 (Australian / Western SaaS conventions).
+ *
+ * Import this file once at the application root. Override individual tokens
+ * with a higher-specificity selector when needed (e.g. brand sub-section).
+ */
+
+@import 'tailwindcss';
+
+@theme {
+  /* ── Brand & semantic colour ───────────────────────────────────────── */
+  --color-brand-50: oklch(0.97 0.04 155);
+  --color-brand-100: oklch(0.93 0.07 155);
+  --color-brand-200: oklch(0.87 0.12 155);
+  --color-brand-300: oklch(0.78 0.16 155);
+  --color-brand-400: oklch(0.69 0.18 155);
+  --color-brand-500: oklch(0.6 0.18 155); /* primary (emerald-ish, agriculture) */
+  --color-brand-600: oklch(0.52 0.17 155);
+  --color-brand-700: oklch(0.44 0.15 155);
+  --color-brand-800: oklch(0.35 0.12 155);
+  --color-brand-900: oklch(0.26 0.08 155);
+  --color-brand-950: oklch(0.18 0.05 155);
+
+  /* Data positive (charts, accent) — blue */
+  --color-accent-500: oklch(0.62 0.19 250);
+  --color-accent-600: oklch(0.54 0.2 250);
+
+  /* States */
+  --color-success-500: oklch(0.65 0.19 145);
+  --color-warning-500: oklch(0.78 0.18 75); /* amber */
+  --color-danger-500: oklch(0.62 0.24 28); /* red — alarm only, per LOCALISATION §4.3 */
+  --color-info-500: oklch(0.65 0.17 215);
+
+  /* ── Surfaces (light) ──────────────────────────────────────────────── */
+  --color-bg: oklch(1 0 0); /* white */
+  --color-bg-subtle: oklch(0.985 0 0); /* near-white */
+  --color-surface: oklch(0.99 0 0);
+  --color-surface-raised: oklch(1 0 0);
+  --color-border: oklch(0.9 0 0);
+  --color-border-strong: oklch(0.8 0 0);
+  --color-text: oklch(0.18 0 0); /* near-black */
+  --color-text-muted: oklch(0.45 0 0);
+  --color-text-subtle: oklch(0.6 0 0);
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --font-sans:
+    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue',
+    sans-serif, 'Apple Color Emoji', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* ── Spacing (8px base, Western generous defaults) ─────────────────── */
+  --spacing-card: 1.5rem; /* 24px, vs 16px in dense Korean SaaS */
+  --spacing-section: 3rem; /* 48px, vs 32px in dense layouts */
+
+  /* ── Radius ────────────────────────────────────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* ── Motion ────────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 400ms;
+
+  /* ── Shadows (subtle, Western SaaS) ────────────────────────────────── */
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.04);
+  --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.08), 0 2px 4px -1px oklch(0 0 0 / 0.04);
+  --shadow-lg: 0 12px 32px -8px oklch(0 0 0 / 0.12), 0 4px 8px -2px oklch(0 0 0 / 0.06);
+}
+
+/* ── Dark mode (1st-class — Western SaaS users often prefer) ─────────── */
+:root[data-theme='dark'],
+:root[data-theme='auto']:where(:root) {
+  /* Default to dark when user pref is dark — overridden by [data-theme="light"]. */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='auto'] {
+    --color-bg: oklch(0.16 0.005 250);
+    --color-bg-subtle: oklch(0.2 0.005 250);
+    --color-surface: oklch(0.22 0.005 250);
+    --color-surface-raised: oklch(0.26 0.005 250);
+    --color-border: oklch(0.32 0.005 250);
+    --color-border-strong: oklch(0.42 0.005 250);
+    --color-text: oklch(0.96 0 0);
+    --color-text-muted: oklch(0.7 0 0);
+    --color-text-subtle: oklch(0.55 0 0);
+
+    --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.5);
+    --shadow-lg: 0 12px 32px -8px oklch(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-bg: oklch(0.16 0.005 250);
+  --color-bg-subtle: oklch(0.2 0.005 250);
+  --color-surface: oklch(0.22 0.005 250);
+  --color-surface-raised: oklch(0.26 0.005 250);
+  --color-border: oklch(0.32 0.005 250);
+  --color-border-strong: oklch(0.42 0.005 250);
+  --color-text: oklch(0.96 0 0);
+  --color-text-muted: oklch(0.7 0 0);
+  --color-text-subtle: oklch(0.55 0 0);
+
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.5);
+  --shadow-lg: 0 12px 32px -8px oklch(0 0 0 / 0.6);
+}
+
+/* ── Base reset / body ─────────────────────────────────────────────── */
+html,
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}

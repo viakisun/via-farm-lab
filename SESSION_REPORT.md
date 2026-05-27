@@ -5,11 +5,64 @@ Read this first before continuing work.
 
 ## TL;DR
 
-**Phase 1A (Foundation) + Phase 1B (API contracts) — COMPLETE.**
-15 PRs delivered as 15 commits on `main`.
-Skipped PR 5 (CI/CD) because there is no GitHub remote yet.
+**Phase 1A + 1B + start of 1C-α — COMPLETE.**
+18 PRs delivered as 18 commits on `main`. Session ending here at a clean
+boundary; context budget consumed.
 
-Next up: **Phase 1C (simulator BFF) — PR 17–22**. Will continue.
+Status summary:
+
+- Phase 1A (Foundation) — PRs 1–4, 6–10 (9 PRs). Done.
+- Phase 1B (API contracts) — PRs 11–16 (6 PRs). Done.
+- Phase 1C-α (simulator BFF + core) — PRs 17, 19, 22 (3 PRs). Partial.
+  - Done: Fastify scaffold, SimClock, SeededRng.
+  - **Remaining**: PR 18 (Postgres+Drizzle), PR 20 (time-control API+WS),
+    PR 21 (snapshot storage).
+
+Skipped on purpose: PR 5 (CI/CD — no GitHub remote yet).
+
+## Phase 1C-α Recap (PRs 17, 19, 22 — partial)
+
+**apps/sim-bff** (PR 17) — Fastify 5 server.
+
+- zod-validated config, helmet, CORS, rate-limit, structured pino logs.
+- `/`, `/health`, `/ready`, `/metrics` (Prometheus).
+- Dockerfile (multi-stage node:22-alpine) + docker-compose.yml
+  (Postgres 17 for local dev). 4/4 inject tests pass.
+
+**@via-farm-lab/sim-core** (PRs 19 + 22).
+
+- `SimClock`: virtual time, start/pause/stop/setSpeed (0.1–100×) / seek,
+  EventEmitter (`tick`, `status`, `jumped`, `speed`). 8 tests.
+- `SeededRng`: xorshift128+ with bigint state, splitmix64 seed expansion,
+  bigint/number/string seeds (string = FNV-1a 64-bit), nextFloat/Int/Range/
+  Normal/Boolean/pick/fork. Deterministic across runtimes. 7 tests.
+
+Sequence preserved by tests: same seed → byte-identical sequence forever.
+Critical for snapshot replay (Phase 1C-α PR 21) and scenario reproducibility.
+
+## What's Next When You Pick This Up
+
+Cleanest entry point is **PR 18 (Postgres + Drizzle)**. Then PR 20 (time
+control HTTP/WS in sim-bff) which wires SimClock to the network, then
+PR 21 (snapshot storage in Postgres). After that, PRs 23–32 are the eight
+physics/chemistry/biology models — each is a 1–2 day, self-contained piece.
+
+To resume:
+
+1. `pnpm install` (rehydrate node_modules if it drifted).
+2. `pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e` (everything
+   green at this commit — `git log -1` should show `feat(sim-core): ...`).
+3. Read PLAN.md PR 18 onwards.
+
+If you want **GitHub up now** (so the work survives a laptop wipe and CI
+can run): create an empty repo and:
+
+```
+git remote add origin git@github.com:<org>/via-farm-lab.git
+git push -u origin main
+```
+
+Then we can do PR 5 (CI/CD) properly.
 
 ## Phase 1B Recap (PR 11–16)
 
@@ -27,17 +80,27 @@ The 5 yamls are the **authoritative contract surface** — copy these to the
 respective owning teams. Each can be hand-edited and `pnpm gen` keeps the
 TS types in sync.
 
-## Completed Commits
+## Completed Commits (latest first)
 
 ```
-aacbae0 feat(a11y):      wire accessibility tooling (PR 10)
-<...>   feat(i18n):      bootstrap localisation @via-farm-lab/i18n (PR 9)
-<...>   feat(telemetry): bootstrap observability package (PR 8)
-<...>   feat(ui):        bootstrap design system @via-farm-lab/ui (PR 7)
-<...>   feat(test):      Vitest + Playwright + visual regression infra (PR 6)
-<...>   feat(toolchain): git hooks (husky + lint-staged + commitlint) (PR 4)
-<...>   feat(toolchain): ESLint flat + Prettier (PR 3)
-<...>   feat(toolchain): strict TypeScript across workspace (PR 2)
+feat(sim-core):    SeededRng + SimClock (PR 22 + 19)
+feat(sim-bff):     Fastify scaffold + health + metrics + Docker (PR 17)
+docs(session):     update SESSION_REPORT for Phase 1B complete
+feat(api-contracts): Growth Analysis API spec stub (PR 16)
+feat(api-contracts): Subscription API spec stub (PR 15)
+feat(api-contracts): Robot Ops API spec (PR 14)
+feat(api-contracts): Backend API spec (PR 13)
+feat(api-contracts): Console API spec (PR 12)
+feat(api-contracts): scaffold OpenAPI workspace + type generation (PR 11)
+docs: add SESSION_REPORT.md (Phase 1A complete)
+feat(a11y):        wire accessibility tooling (PR 10)
+feat(i18n):        bootstrap localisation @via-farm-lab/i18n (PR 9)
+feat(telemetry):   bootstrap observability package (PR 8)
+feat(ui):          bootstrap design system @via-farm-lab/ui (PR 7)
+feat(test):        Vitest + Playwright + visual regression infra (PR 6)
+feat(toolchain):   git hooks (husky + lint-staged + commitlint) (PR 4)
+feat(toolchain):   ESLint flat + Prettier (PR 3)
+feat(toolchain):   strict TypeScript across workspace (PR 2)
 d75f28b chore: bootstrap monorepo (PR 1)
 ```
 
@@ -45,16 +108,16 @@ Run `git log --oneline` for the canonical list.
 
 ## Verified Health
 
-| Check                 | Status | How                                                               |
-| --------------------- | ------ | ----------------------------------------------------------------- |
-| `pnpm install`        | ✅     | 19 workspace projects recognised                                  |
-| `pnpm typecheck`      | ✅     | 18/18 packages (TS strict + exactOptionalPropertyTypes)           |
-| `pnpm lint`           | ✅     | 18/18 packages, zero warnings                                     |
-| `pnpm test`           | ✅     | 21 unit tests (3 telemetry + 3 i18n + 4 ui Button + 11 smoke + …) |
-| `pnpm test:e2e`       | ✅     | 2/2 (Playwright bring-up + axe-core smoke)                        |
-| `pnpm check:spelling` | ✅     | No US spellings in en-AU locales                                  |
-| Pre-commit hook       | ✅     | Caught real issues during the session (lint, AU spelling)         |
-| `commitlint`          | ✅     | Conventional Commits enforced                                     |
+| Check                 | Status | How                                                                                                 |
+| --------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| `pnpm install`        | ✅     | 19 workspace projects recognised                                                                    |
+| `pnpm typecheck`      | ✅     | 18/18 packages (TS strict + exactOptionalPropertyTypes)                                             |
+| `pnpm lint`           | ✅     | 18/18 packages, zero warnings                                                                       |
+| `pnpm test`           | ✅     | 40 unit tests (3 telemetry + 3 i18n + 4 ui + 3 api-contracts + 4 sim-bff + 7 rng + 8 clock + smoke) |
+| `pnpm test:e2e`       | ✅     | 2/2 (Playwright bring-up + axe-core smoke)                                                          |
+| `pnpm check:spelling` | ✅     | No US spellings in en-AU locales                                                                    |
+| Pre-commit hook       | ✅     | Caught real issues during the session (lint, AU spelling)                                           |
+| `commitlint`          | ✅     | Conventional Commits enforced                                                                       |
 
 ## Repository Snapshot
 

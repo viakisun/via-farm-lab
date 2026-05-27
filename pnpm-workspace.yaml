@@ -67,6 +67,10 @@ catalog:
   '@commitlint/cli': ^19.6.0
   '@commitlint/config-conventional': ^19.6.0
 
+  # OpenAPI tooling
+  'openapi-typescript': ^7.5.0
+  '@redocly/cli': ^1.27.0
+
   # Accessibility
   '@axe-core/playwright': ^4.10.0
 

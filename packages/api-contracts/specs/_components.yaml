@@ -1,0 +1,52 @@
+# Shared OpenAPI components referenced by every system spec via $ref.
+# Re-published in every yaml that needs them (openapi-typescript inlines).
+components:
+  schemas:
+    PlotId:
+      type: string
+      description: |
+        Hierarchical Plot identifier — `farm.site.room.rack.bed.idx`.
+        Example: `pilot.syd.a.r01.t02.p03`.
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+      example: pilot.syd.a.r01.t02.p03
+
+    IsoTimestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 UTC timestamp.
+
+    Severity:
+      type: string
+      enum: [info, warning, critical]
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: 'https://errors.viafarm.com.au/not-found'
+        title: { type: string, example: 'Resource not found' }
+        status: { type: integer, example: 404 }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+      description: Opaque pagination cursor returned by the previous page.
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'

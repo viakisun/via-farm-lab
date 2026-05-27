@@ -2,19 +2,32 @@
   "name": "@via-farm-lab/api-contracts",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "description": "OpenAPI 3.1 specs for the 5 external systems (Console, Backend, Robot Ops, Subscription, Growth Analysis) + generated TypeScript types. Authoritative contract surface for other VIAFARM teams.",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./console": "./src/generated/console.ts",
+    "./backend": "./src/generated/backend.ts",
+    "./robot": "./src/generated/robot.ts",
+    "./subscription": "./src/generated/subscription.ts",
+    "./growth": "./src/generated/growth.ts",
+    "./common": "./src/common.ts"
+  },
   "scripts": {
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "gen": "node scripts/generate.mjs",
+    "lint:spec": "redocly lint specs/*.yaml"
   },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
+    "@redocly/cli": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "openapi-typescript": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -5,11 +5,27 @@ Read this first before continuing work.
 
 ## TL;DR
 
-**Phase 1A (Foundation) — COMPLETE.** 9 PRs delivered as 9 commits on `main`.
-Skipped PR 5 (CI/CD) because there is no GitHub remote yet — see Pending Decisions.
+**Phase 1A (Foundation) + Phase 1B (API contracts) — COMPLETE.**
+15 PRs delivered as 15 commits on `main`.
+Skipped PR 5 (CI/CD) because there is no GitHub remote yet.
 
-Next up: **Phase 1B (API contracts), Phase 1C (simulator BFF)** — both code-only,
-no external dependencies, ready to proceed.
+Next up: **Phase 1C (simulator BFF) — PR 17–22**. Will continue.
+
+## Phase 1B Recap (PR 11–16)
+
+- All 5 external system OpenAPI specs defined:
+  Console, Backend, Robot Ops, Subscription (stub), Growth Analysis (stub).
+- TypeScript types auto-generated into `packages/api-contracts/src/generated/`.
+- `pnpm gen` regenerates from yaml; generated/ ignored by ESLint.
+- Plot ID pattern (`farm.site.room.rack.bed.idx`) canonical across all systems.
+- Subscription includes APP-compliant consent shape (privacy / terms / imageUse
+  / marketing). Customer.locale ∈ {en-AU, ko-KR}. AUD pricing.
+- Robot scan images via signed URL only — never inline (privacy + bandwidth).
+- WebSocket endpoints documented in yaml (no JSON Schema, just description).
+
+The 5 yamls are the **authoritative contract surface** — copy these to the
+respective owning teams. Each can be hand-edited and `pnpm gen` keeps the
+TS types in sync.
 
 ## Completed Commits
 

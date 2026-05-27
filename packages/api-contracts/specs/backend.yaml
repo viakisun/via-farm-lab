@@ -1,0 +1,370 @@
+openapi: 3.1.0
+
+info:
+  title: VIAFARM Backend API
+  version: '0.1.0'
+  summary: L1-L2 — sensor telemetry, equipment state and control, alarms, historian.
+  description: |
+    Owned by the **Development Team**. Surfaces the PLC / device layer to
+    the Digital Twin and other operators.
+
+    Read paths: sensors (latest + history), equipment state, alarms.
+    Write paths: equipment commands (rate-limited, audited).
+    Real-time: WebSocket streams for sensors, equipment-state changes, alarms.
+  contact:
+    name: Backend Development
+    email: backend@viafarm.com.au
+
+servers:
+  - url: https://backend.viafarm.com.au/v1
+    description: Production (Sydney)
+  - url: http://localhost:4002/v1
+    description: Local simulator (twin-bff)
+
+tags:
+  - name: sensors
+  - name: equipment
+  - name: alarms
+  - name: streams
+    description: WebSocket endpoints (documented in description; no JSON Schema).
+
+paths:
+  /sensors:
+    get:
+      tags: [sensors]
+      summary: List sensors with metadata.
+      operationId: listSensors
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Sensor' }
+
+  /sensors/{sensorId}/latest:
+    parameters:
+      - in: path
+        name: sensorId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [sensors]
+      operationId: getLatestReading
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SensorReading' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /sensors/history:
+    get:
+      tags: [sensors]
+      summary: Historical readings (aggregated).
+      operationId: getSensorHistory
+      parameters:
+        - in: query
+          name: ids
+          required: true
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: false
+        - in: query
+          name: from
+          required: true
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          required: true
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: agg
+          schema:
+            type: string
+            enum: [raw, 1m, 5m, 1h, 1d]
+            default: 1m
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SensorSeries' }
+
+  /equipment:
+    get:
+      tags: [equipment]
+      summary: List equipment with current state.
+      operationId: listEquipment
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Equipment' }
+
+  /equipment/{equipmentId}/command:
+    parameters:
+      - in: path
+        name: equipmentId
+        required: true
+        schema: { type: string }
+    post:
+      tags: [equipment]
+      summary: Issue a control command (rate-limited; requires authorisation).
+      operationId: postEquipmentCommand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EquipmentCommand' }
+      responses:
+        '202':
+          description: Accepted (asynchronous execution; observe via WS or polling).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAck' }
+        '400': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+
+  /alarms:
+    get:
+      tags: [alarms]
+      summary: Active alarms (default) or historical when range supplied.
+      operationId: listAlarms
+      parameters:
+        - in: query
+          name: active
+          schema: { type: boolean, default: true }
+        - in: query
+          name: severity
+          schema: { $ref: '#/components/schemas/Severity' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Alarm' }
+
+  /alarms/{alarmId}/ack:
+    parameters:
+      - in: path
+        name: alarmId
+        required: true
+        schema: { type: string }
+    post:
+      tags: [alarms]
+      summary: Acknowledge an active alarm (audited).
+      operationId: ackAlarm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actorId]
+              properties:
+                actorId: { type: string }
+                note: { type: string }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Alarm' }
+
+  # ─────────────────────── WebSocket streams (documented) ───────────────────────
+
+  /stream/sensors:
+    get:
+      tags: [streams]
+      summary: WebSocket — live sensor readings (1 Hz nominal).
+      description: |
+        Upgrade to WebSocket. Server pushes JSON messages of type `SensorReading`
+        every second per subscribed sensor.
+
+        Subscribe by sending: `{"action":"subscribe","ids":["sensor-..."]}`.
+        Unsubscribe by `{"action":"unsubscribe","ids":[...]}`. Heartbeats every 30 s.
+      responses:
+        '101':
+          description: Switching Protocols.
+
+  /stream/equipment:
+    get:
+      tags: [streams]
+      summary: WebSocket — equipment state changes.
+      description: Server pushes `Equipment` whenever state changes; bursty.
+      responses: { '101': { description: Switching Protocols. } }
+
+  /stream/alarms:
+    get:
+      tags: [streams]
+      summary: WebSocket — new alarms.
+      description: Server pushes `Alarm` on creation; also pushes ack updates.
+      responses: { '101': { description: Switching Protocols. } }
+
+components:
+  schemas:
+    IsoTimestamp:
+      type: string
+      format: date-time
+
+    Severity:
+      type: string
+      enum: [info, warning, critical]
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    PlotId:
+      type: string
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+
+    SensorType:
+      type: string
+      enum: [temperature, humidity, co2, ec, ph, flow, water-level, ppfd]
+
+    EquipmentType:
+      type: string
+      enum:
+        [pump, dosing-pump, valve, led-bar, mist-nozzle, co2-cylinder, humidifier, hvac-diffuser]
+
+    Sensor:
+      type: object
+      required: [id, type, unit, location]
+      properties:
+        id: { type: string, example: temp-room-a-01 }
+        type: { $ref: '#/components/schemas/SensorType' }
+        unit: { type: string, example: '°C' }
+        location:
+          type: object
+          required: [roomId]
+          properties:
+            roomId: { type: string }
+            bedId: { type: string, nullable: true }
+            plotId:
+              allOf: [{ $ref: '#/components/schemas/PlotId' }]
+              nullable: true
+            x: { type: number, nullable: true, description: metres }
+            y: { type: number, nullable: true }
+            z: { type: number, nullable: true }
+
+    SensorReading:
+      type: object
+      required: [sensorId, t, value]
+      properties:
+        sensorId: { type: string }
+        t: { $ref: '#/components/schemas/IsoTimestamp' }
+        value: { type: number }
+        quality:
+          type: string
+          enum: [good, suspect, bad]
+          default: good
+
+    SensorSeries:
+      type: object
+      required: [sensorId, points]
+      properties:
+        sensorId: { type: string }
+        agg:
+          type: string
+          enum: [raw, 1m, 5m, 1h, 1d]
+        points:
+          type: array
+          items:
+            type: object
+            required: [t, value]
+            properties:
+              t: { $ref: '#/components/schemas/IsoTimestamp' }
+              value: { type: number }
+              min: { type: number, nullable: true }
+              max: { type: number, nullable: true }
+
+    Equipment:
+      type: object
+      required: [id, type, state]
+      properties:
+        id: { type: string, example: pump-supply-01 }
+        type: { $ref: '#/components/schemas/EquipmentType' }
+        state:
+          type: object
+          required: [on]
+          properties:
+            on: { type: boolean }
+            setpoint: { type: number, nullable: true }
+            measured: { type: number, nullable: true }
+            fault: { type: string, nullable: true }
+        location:
+          type: object
+          properties:
+            roomId: { type: string }
+            x: { type: number }
+            y: { type: number }
+            z: { type: number }
+
+    EquipmentCommand:
+      type: object
+      required: [action, actorId]
+      properties:
+        action:
+          type: string
+          enum: [on, off, set]
+        setpoint: { type: number, nullable: true }
+        actorId: { type: string }
+        reason: { type: string, nullable: true }
+
+    CommandAck:
+      type: object
+      required: [commandId, acceptedAt]
+      properties:
+        commandId: { type: string, format: uuid }
+        acceptedAt: { $ref: '#/components/schemas/IsoTimestamp' }
+
+    Alarm:
+      type: object
+      required: [id, severity, createdAt, source, message, acked]
+      properties:
+        id: { type: string, format: uuid }
+        severity: { $ref: '#/components/schemas/Severity' }
+        createdAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        source:
+          type: object
+          required: [kind]
+          properties:
+            kind:
+              type: string
+              enum: [sensor, equipment, system]
+            id: { type: string }
+        message: { type: string }
+        plotId:
+          allOf: [{ $ref: '#/components/schemas/PlotId' }]
+          nullable: true
+        acked: { type: boolean }
+        ackedAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+        ackedBy: { type: string, nullable: true }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }

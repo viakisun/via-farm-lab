@@ -1,0 +1,58 @@
+{
+  "app": {
+    "name": "VIAFARM 디지털 트윈",
+    "tagline": "실시간 수직농장."
+  },
+  "nav": {
+    "overview": "개요",
+    "cultivation": "재배",
+    "climate": "환경",
+    "robot": "로봇",
+    "settings": "설정"
+  },
+  "action": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "confirm": "확인",
+    "close": "닫기",
+    "retry": "다시 시도"
+  },
+  "status": {
+    "loading": "불러오는 중…",
+    "empty": "아직 없음",
+    "error": "오류가 발생했습니다.",
+    "offline": "오프라인 상태입니다. 재연결 중…"
+  },
+  "domain": {
+    "rack": "재배 랙",
+    "bed": "베드",
+    "plot": "플롯",
+    "plant": "식물",
+    "crop": "작물",
+    "butterLettuce": "버터헤드",
+    "nutrientSolution": "양액",
+    "nutrientDoser": "양액기",
+    "rawWater": "원수",
+    "supplyLine": "급액 라인",
+    "drainLine": "배액 라인",
+    "pump": "펌프",
+    "dosingPump": "도징 펌프",
+    "valve": "밸브",
+    "ec": "EC",
+    "ph": "pH",
+    "ppfd": "광량 (PPFD)",
+    "ledGrowLight": "LED 그로우라이트",
+    "co2Cylinder": "CO₂ 봄베",
+    "ndirSensor": "NDIR 센서",
+    "humidifier": "초음파 가습기",
+    "hvac": "공조",
+    "sowing": "파종",
+    "transplant": "정식",
+    "harvest": "수확",
+    "alarm": "알람",
+    "setpoint": "셋포인트",
+    "plotSubscription": "플롯 분양",
+    "plotAdoption": "플롯 분양"
+  }
+}

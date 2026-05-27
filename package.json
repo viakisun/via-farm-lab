@@ -25,7 +25,8 @@
     "prepare": "husky",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "check:spelling": "node packages/i18n/scripts/check-au-spelling.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [

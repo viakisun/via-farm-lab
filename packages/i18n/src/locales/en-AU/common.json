@@ -1,0 +1,58 @@
+{
+  "app": {
+    "name": "VIAFARM Digital Twin",
+    "tagline": "Vertical farming, in real time."
+  },
+  "nav": {
+    "overview": "Overview",
+    "cultivation": "Cultivation",
+    "climate": "Climate",
+    "robot": "Robot",
+    "settings": "Settings"
+  },
+  "action": {
+    "save": "Save changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "retry": "Retry"
+  },
+  "status": {
+    "loading": "Loading…",
+    "empty": "Nothing here yet.",
+    "error": "Something went wrong.",
+    "offline": "You're offline. Reconnecting…"
+  },
+  "domain": {
+    "rack": "Rack",
+    "bed": "Bed",
+    "plot": "Plot",
+    "plant": "Plant",
+    "crop": "Crop",
+    "butterLettuce": "Butter Lettuce",
+    "nutrientSolution": "Nutrient Solution",
+    "nutrientDoser": "Nutrient Doser",
+    "rawWater": "Raw Water",
+    "supplyLine": "Supply Line",
+    "drainLine": "Drain Line",
+    "pump": "Pump",
+    "dosingPump": "Dosing Pump",
+    "valve": "Valve",
+    "ec": "EC",
+    "ph": "pH",
+    "ppfd": "PPFD",
+    "ledGrowLight": "LED Grow Light",
+    "co2Cylinder": "CO₂ Cylinder",
+    "ndirSensor": "NDIR CO₂ Sensor",
+    "humidifier": "Ultrasonic Humidifier",
+    "hvac": "HVAC",
+    "sowing": "Sowing",
+    "transplant": "Transplant",
+    "harvest": "Harvest",
+    "alarm": "Alarm",
+    "setpoint": "Setpoint",
+    "plotSubscription": "Plot Subscription",
+    "plotAdoption": "Plot Adoption"
+  }
+}

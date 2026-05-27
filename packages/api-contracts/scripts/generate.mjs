@@ -15,7 +15,7 @@ const OUT_DIR = join(PKG_ROOT, 'src/generated');
 
 mkdirSync(OUT_DIR, { recursive: true });
 
-const yamls = readdirSync(SPECS_DIR).filter((f) => f.endsWith('.yaml'));
+const yamls = readdirSync(SPECS_DIR).filter((f) => f.endsWith('.yaml') && !f.startsWith('_'));
 if (yamls.length === 0) {
   console.error('No yaml specs found in', SPECS_DIR);
   process.exit(1);

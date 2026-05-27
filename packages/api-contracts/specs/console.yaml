@@ -1,0 +1,358 @@
+openapi: 3.1.0
+
+info:
+  title: VIAFARM Console API
+  version: '0.1.0'
+  summary: L3 MES — crop master, plot map, recipes, operations schedule and events.
+  description: |
+    Owned by the **Pilot Glasshouse Operations Team**.
+    The Digital Twin is a read-only consumer of this API (Phase 1).
+
+    Authoritative for:
+    - Crop master data (variety, growth model parameters)
+    - Bed and Plot layout (Plot is the subscription unit)
+    - Recipes (EC/pH/PPFD/temperature setpoints by crop stage)
+    - Operations schedule and event log (sowing, transplant, harvest, cleaning)
+
+    Authoritative join key with all other systems: `PlotId`.
+  contact:
+    name: Pilot Glasshouse Operations
+    email: operations@viafarm.com.au
+
+servers:
+  - url: https://console.viafarm.com.au/v1
+    description: Production (Sydney)
+  - url: http://localhost:4001/v1
+    description: Local simulator (twin-bff)
+
+tags:
+  - name: crops
+    description: Master crop data (Butter Lettuce in Phase 1; extensible).
+  - name: beds
+    description: Physical bed layout.
+  - name: plots
+    description: Subscription-unit plots (4–8 cells each).
+  - name: recipes
+    description: Nutrient + environment setpoint programmes by crop stage.
+  - name: events
+    description: Operational event log (sowing, transplant, harvest, cleaning).
+  - name: schedule
+    description: Upcoming planned work.
+
+paths:
+  /crops:
+    get:
+      tags: [crops]
+      summary: List all known crops (Phase 1 returns Butter Lettuce only).
+      operationId: listCrops
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Crop' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /crops/{cropId}:
+    parameters:
+      - in: path
+        name: cropId
+        required: true
+        schema: { type: string }
+    get:
+      tags: [crops]
+      operationId: getCrop
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Crop' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /beds:
+    get:
+      tags: [beds]
+      summary: List beds.
+      operationId: listBeds
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Bed' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /plots:
+    get:
+      tags: [plots]
+      summary: List all plots in the farm (location-only; assignment lives in Subscription).
+      operationId: listPlots
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Plot' }
+        default: { $ref: '#/components/responses/Error' }
+
+  /plots/{plotId}:
+    parameters:
+      - in: path
+        name: plotId
+        required: true
+        schema: { $ref: '#/components/schemas/PlotId' }
+    get:
+      tags: [plots]
+      operationId: getPlot
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Plot' }
+        '404': { $ref: '#/components/responses/Error' }
+
+  /recipes:
+    get:
+      tags: [recipes]
+      summary: List recipes.
+      operationId: listRecipes
+      parameters:
+        - in: query
+          name: cropId
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Recipe' }
+
+  /events:
+    get:
+      tags: [events]
+      summary: Operational events (sowing/transplant/harvest/cleaning/anomaly).
+      operationId: listEvents
+      parameters:
+        - in: query
+          name: from
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: to
+          schema: { $ref: '#/components/schemas/IsoTimestamp' }
+        - in: query
+          name: type
+          schema: { $ref: '#/components/schemas/EventType' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventPage' }
+    post:
+      tags: [events]
+      summary: Record a new operational event.
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventCreate' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Event' }
+
+  /schedule:
+    get:
+      tags: [schedule]
+      summary: Upcoming scheduled tasks (next 7 days by default).
+      operationId: getSchedule
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, minimum: 1, maximum: 30, default: 7 }
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ScheduledTask' }
+
+components:
+  schemas:
+    PlotId:
+      type: string
+      description: Hierarchical Plot identifier — `farm.site.room.rack.bed.idx`.
+      pattern: '^[a-z0-9]+(\.[a-z0-9]+){5}$'
+      example: pilot.syd.a.r01.t02.p03
+
+    IsoTimestamp:
+      type: string
+      format: date-time
+
+    Severity:
+      type: string
+      enum: [info, warning, critical]
+
+    ApiError:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+
+    EventType:
+      type: string
+      enum: [sowing, transplant, harvest, cleaning, recipe_change, anomaly, note]
+
+    Crop:
+      type: object
+      required: [id, scientificName, displayName, defaultRecipeId]
+      properties:
+        id: { type: string, example: butter-lettuce }
+        scientificName: { type: string, example: Lactuca sativa var. capitata }
+        displayName:
+          type: object
+          required: [en-AU, ko-KR]
+          properties:
+            'en-AU': { type: string, example: Butter Lettuce }
+            'ko-KR': { type: string, example: 버터헤드 }
+        defaultRecipeId: { type: string }
+        cycleDays: { type: integer, example: 42 }
+
+    Bed:
+      type: object
+      required: [id, rackId, tier, plotIds]
+      properties:
+        id: { type: string, example: r01.t02 }
+        rackId: { type: string, example: r01 }
+        tier: { type: integer, example: 2 }
+        plotIds:
+          type: array
+          items: { $ref: '#/components/schemas/PlotId' }
+
+    Plot:
+      type: object
+      required: [id, bedId, cellCount, currentCropId, plantedAt]
+      properties:
+        id: { $ref: '#/components/schemas/PlotId' }
+        bedId: { type: string, example: r01.t02 }
+        cellCount: { type: integer, enum: [4, 8], example: 4 }
+        currentCropId:
+          type: string
+          nullable: true
+          example: butter-lettuce
+        plantedAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+        expectedHarvestAt:
+          allOf: [{ $ref: '#/components/schemas/IsoTimestamp' }]
+          nullable: true
+
+    Recipe:
+      type: object
+      required: [id, cropId, stages]
+      properties:
+        id: { type: string, example: butter-lettuce-default }
+        cropId: { type: string, example: butter-lettuce }
+        stages:
+          type: array
+          items: { $ref: '#/components/schemas/RecipeStage' }
+
+    RecipeStage:
+      type: object
+      required: [stage, fromDay, toDay, ecTarget, phTarget, ppfdTarget, tempTarget]
+      properties:
+        stage: { type: string, example: vegetative }
+        fromDay: { type: integer, example: 0 }
+        toDay: { type: integer, example: 21 }
+        ecTarget: { type: number, format: float, example: 1.6 }
+        phTarget: { type: number, format: float, example: 5.8 }
+        ppfdTarget: { type: number, format: float, example: 200 }
+        tempTarget: { type: number, format: float, example: 20 }
+
+    Event:
+      type: object
+      required: [id, type, occurredAt, actorId]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/EventType' }
+        occurredAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        actorId: { type: string, description: User or system identifier }
+        plotId:
+          allOf: [{ $ref: '#/components/schemas/PlotId' }]
+          nullable: true
+        cropId: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+
+    EventCreate:
+      type: object
+      required: [type, occurredAt, actorId]
+      properties:
+        type: { $ref: '#/components/schemas/EventType' }
+        occurredAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        actorId: { type: string }
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        cropId: { type: string }
+        note: { type: string }
+
+    EventPage:
+      type: object
+      required: [items, nextCursor, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Event' }
+        nextCursor:
+          type: string
+          nullable: true
+        total: { type: integer }
+
+    ScheduledTask:
+      type: object
+      required: [id, dueAt, type, status]
+      properties:
+        id: { type: string }
+        dueAt: { $ref: '#/components/schemas/IsoTimestamp' }
+        type: { $ref: '#/components/schemas/EventType' }
+        status:
+          type: string
+          enum: [pending, in_progress, done, skipped]
+        plotId: { $ref: '#/components/schemas/PlotId' }
+        cropId: { type: string }
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    Error:
+      description: Standard error response.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiError' }

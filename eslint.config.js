@@ -2,6 +2,7 @@
 // Per-package overrides can be added by extending this file in `packages/*/eslint.config.js`.
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -70,6 +71,20 @@ export default tseslint.config(
       'no-debugger': 'error',
       eqeqeq: ['error', 'always'],
       curly: ['error', 'all'],
+    },
+  },
+  // React / JSX: enforce jsx-a11y rules (WCAG 2.2 AA preparation).
+  {
+    files: ['**/*.tsx', '**/*.jsx'],
+    ...jsxA11y.flatConfigs.recommended,
+    languageOptions: {
+      ...jsxA11y.flatConfigs.recommended.languageOptions,
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
   // Test files: relax a few rules

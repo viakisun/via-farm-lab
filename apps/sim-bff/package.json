@@ -2,20 +2,36 @@
   "name": "@via-farm-lab/sim-bff",
   "version": "0.0.0",
   "private": true,
-  "description": "Simulator BFF — Fastify + DuckDB/Postgres + 5 external API surfaces (Console/Backend/Robot/Subscription/Growth). Implemented from PR 17.",
+  "description": "Simulator BFF — Fastify server exposing 5 external API surfaces (Console/Backend/Robot/Subscription/Growth) backed by a physics/chemistry/biology simulator. Mock-first; real adapters slot in later.",
   "type": "module",
+  "main": "src/index.ts",
   "scripts": {
-    "dev": "echo '@via-farm-lab/sim-bff — to be implemented in PR 17 (Fastify scaffold)'",
-    "build": "echo 'pending'",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "@fastify/cors": "catalog:",
+    "@fastify/helmet": "catalog:",
+    "@fastify/rate-limit": "catalog:",
+    "@fastify/websocket": "catalog:",
+    "@via-farm-lab/api-contracts": "workspace:*",
+    "@via-farm-lab/telemetry": "workspace:*",
+    "fastify": "catalog:",
+    "fastify-plugin": "catalog:",
+    "prom-client": "catalog:",
+    "zod": "catalog:"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
+    "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

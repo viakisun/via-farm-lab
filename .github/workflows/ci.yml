@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save minutes and queue time.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Keep CI deterministic. Locale + timezone match LOCALISATION.md §3.
+  LANG: en_AU.UTF-8
+  TZ: Australia/Sydney
+  CI: true
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────
+  # Reusable setup — cache the pnpm store and produce a workspace layout
+  # that all downstream jobs reuse via actions/cache restore.
+  # ─────────────────────────────────────────────────────────────────────
+  setup:
+    name: Install + cache deps
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      pnpm-store: ${{ steps.pnpm-cache.outputs.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Resolve pnpm store path
+        id: pnpm-cache
+        shell: bash
+        run: echo "dir=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Install dependencies (frozen)
+        run: pnpm install --frozen-lockfile
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Static checks — fast feedback. Fail-fast: false so authors see every
+  # category at once instead of trickling discoveries.
+  # ─────────────────────────────────────────────────────────────────────
+  static:
+    name: ${{ matrix.task }}
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [lint, typecheck, format:check, check:spelling]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run ${{ matrix.task }}
+        run: pnpm ${{ matrix.task }}
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Unit tests via Vitest workspace. Coverage reporters configured in
+  # vitest.config.base.ts; thresholds will tighten in Phase 8 PR 155.
+  # ─────────────────────────────────────────────────────────────────────
+  unit:
+    name: Unit tests
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vitest
+        run: pnpm test
+      - name: Upload coverage (artefact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: '**/coverage/**'
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Build everything so a regression in production output is caught
+  # before merge. Also lets us ship a sim-bff Docker image preview.
+  # ─────────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build all workspaces
+        run: pnpm build
+
+  # ─────────────────────────────────────────────────────────────────────
+  # End-to-end + visual regression via Playwright (chromium).
+  # Snapshot baselines committed to e2e/**-snapshots/; diffs surface
+  # as a downloadable HTML report.
+  # ─────────────────────────────────────────────────────────────────────
+  e2e:
+    name: E2E (Playwright + axe)
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-pw-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pw-
+      - name: Install Playwright chromium + deps
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run Playwright
+        run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────────
+  # Final gate — a single required check the branch-protection rule
+  # can target. Depends on every other job so a failure in any blocks.
+  # ─────────────────────────────────────────────────────────────────────
+  ci-pass:
+    name: CI pass
+    needs: [static, unit, build, e2e]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Decide
+        shell: bash
+        run: |
+          if [[ "${{ needs.static.result }}" != "success" \
+             || "${{ needs.unit.result }}"   != "success" \
+             || "${{ needs.build.result }}"  != "success" \
+             || "${{ needs.e2e.result }}"    != "success" ]]; then
+            echo "One or more jobs failed:"
+            echo "  static: ${{ needs.static.result }}"
+            echo "  unit:   ${{ needs.unit.result }}"
+            echo "  build:  ${{ needs.build.result }}"
+            echo "  e2e:    ${{ needs.e2e.result }}"
+            exit 1
+          fi
+          echo "All upstream jobs passed."

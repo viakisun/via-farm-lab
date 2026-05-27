@@ -1,0 +1,19 @@
+# Default owner — every PR auto-requests review from @viakisun
+# until other roles are onboarded.
+*       @viakisun
+
+# Documentation is jointly owned with the operations team in time;
+# for now, single owner.
+*.md    @viakisun
+
+# Cloud + deployment configuration deserves extra scrutiny.
+/infra/                 @viakisun
+/.github/workflows/     @viakisun
+/Dockerfile             @viakisun
+/apps/sim-bff/Dockerfile @viakisun
+/docker-compose.yml     @viakisun
+
+# Authoritative platform documents — pings the owner on every edit.
+/PLAN.md                @viakisun
+/ARCHITECTURE.md        @viakisun
+/LOCALISATION.md        @viakisun

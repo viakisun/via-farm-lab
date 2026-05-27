@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Australia/Sydney
+    open-pull-requests-limit: 10
+    groups:
+      # Group routine dev-dep bumps to one PR per week — less noise.
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      # Group small ecosystem bumps that are usually safe together.
+      babylon:
+        patterns: ['@babylonjs/*']
+      radix:
+        patterns: ['@radix-ui/*']
+      fastify:
+        patterns: ['fastify', '@fastify/*', 'fastify-plugin']
+      sentry:
+        patterns: ['@sentry/*']
+      testing:
+        patterns: ['vitest', '@vitest/*', '@playwright/*', '@testing-library/*', 'happy-dom']
+    commit-message:
+      prefix: build
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: Australia/Sydney
+    commit-message:
+      prefix: ci

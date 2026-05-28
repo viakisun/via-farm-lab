@@ -2,19 +2,26 @@
   "name": "@via-farm-lab/sim-models",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "description": "Physics / chemistry / biology models for the simulator. Plant biomass, EC/pH chemistry, flow, CO₂ dispersion, temp/humidity, PAR, robot kinematics, scan measurement.",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./biomass": "./src/biomass.ts"
+  },
   "scripts": {
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "@via-farm-lab/sim-core": "workspace:*"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

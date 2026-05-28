@@ -1,0 +1,96 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev: sim-bff",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["-F", "@via-farm-lab/sim-bff", "dev"],
+      "options": { "cwd": "${workspaceFolder}", "env": { "HOST": "0.0.0.0", "PORT": "4100" } },
+      "isBackground": true,
+      "presentation": {
+        "group": "dev",
+        "panel": "dedicated",
+        "reveal": "always",
+        "echo": true
+      },
+      "problemMatcher": {
+        "owner": "fastify",
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*tsx watch.*",
+          "endsPattern": ".*sim-bff listening.*"
+        }
+      }
+    },
+    {
+      "label": "dev: web",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["-F", "@via-farm-lab/web", "dev", "--", "--host", "0.0.0.0"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "group": "dev",
+        "panel": "dedicated",
+        "reveal": "always",
+        "echo": true
+      },
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^.*$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*VITE.*",
+          "endsPattern": ".*ready in.*"
+        }
+      }
+    },
+    {
+      "label": "dev: both (sim-bff + web)",
+      "dependsOn": ["dev: sim-bff", "dev: web"],
+      "dependsOrder": "parallel",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "test: all (unit)",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["test"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "test:e2e",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["test:e2e"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "lint + typecheck + spelling",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["lint", "&&", "pnpm", "typecheck", "&&", "pnpm", "check:spelling"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "openapi: regenerate types",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["-F", "@via-farm-lab/api-contracts", "gen"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

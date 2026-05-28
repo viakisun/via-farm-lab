@@ -1,5 +1,5 @@
 import { Button, Card } from '@via-farm-lab/ui';
-import { useMemo, useState, type JSX } from 'react';
+import { useCallback, useMemo, useState, type JSX } from 'react';
 
 import { BabylonCanvas } from './babylon/Canvas';
 import { simControls } from './sim/controls';
@@ -17,9 +17,16 @@ export function App(): JSX.Element {
     return m;
   }, [plants]);
 
+  // CRITICAL: memoise so Canvas's useEffect doesn't see a new function on
+  // every parent re-render (each WS message). Without this, Babylon
+  // rebuilds the entire scene every ~3 ticks → camera resets, flicker.
+  const onReady = useCallback((info: { backend: 'webgpu' | 'webgl2' }) => {
+    setBackend(info.backend);
+  }, []);
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-[var(--color-bg)] text-[var(--color-text)]">
-      <BabylonCanvas onReady={(info) => setBackend(info.backend)} plantFractions={plantFractions} />
+      <BabylonCanvas onReady={onReady} plantFractions={plantFractions} />
 
       {/* HUD — clock + connection state. Top-right so the scene reads
           uninterrupted from the left (matches reference render layout). */}

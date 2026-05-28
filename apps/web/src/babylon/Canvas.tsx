@@ -51,14 +51,9 @@ async function createEngine(canvas: HTMLCanvasElement): Promise<{
 function buildScene(engine: Engine): Scene {
   const scene = new Scene(engine);
 
-  // Cutaway "dollhouse" framing matching the reference render: camera in
-  // front (south), elevated, looking down-and-forward at the bed area.
-  // South wall is hidden by room.ts so the viewer sees in.
-  // Eye-level cutaway view, looking from outside the south wall into the
-  // room. Beds (y≈0.85) sit in the lower-middle of frame; ceiling strips
-  // + LED bars in the upper half.
-  // "Inside the room" cutaway view — south wall hidden so the viewer
-  // sees in. Beds + plants centred in the lower-middle of frame.
+  // Cutaway "dollhouse" framing matching the reference render: camera
+  // outside the (hidden) south wall, looking into the room. Beds (y≈0.85)
+  // sit in the lower-middle of frame; ceiling strips + LED bars above.
   const camera = new ArcRotateCamera(
     'camera',
     Math.PI / 2 + 0.15,
@@ -117,6 +112,8 @@ export function BabylonCanvas({ onReady, plantFractions }: CanvasProps): JSX.Ele
     let cancelled = false;
     let resize: (() => void) | null = null;
 
+    let inspectorToggle: ((e: KeyboardEvent) => void) | null = null;
+
     void (async () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -132,6 +129,26 @@ export function BabylonCanvas({ onReady, plantFractions }: CanvasProps): JSX.Ele
         engine.runRenderLoop(() => scene.render());
         resize = () => engine.resize();
         window.addEventListener('resize', resize);
+
+        // Dev-only: Shift+I toggles the Babylon Inspector. Lazy-import so
+        // the 4 MB inspector isn't shipped to production users.
+        if (import.meta.env.DEV) {
+          inspectorToggle = (event: KeyboardEvent): void => {
+            if (event.shiftKey && (event.key === 'I' || event.key === 'i')) {
+              event.preventDefault();
+              void (async () => {
+                await import('@babylonjs/inspector');
+                if (scene.debugLayer.isVisible()) {
+                  scene.debugLayer.hide();
+                } else {
+                  void scene.debugLayer.show({ embedMode: true, overlay: true });
+                }
+              })();
+            }
+          };
+          window.addEventListener('keydown', inspectorToggle);
+        }
+
         onReady?.({ backend, engine });
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -141,6 +158,7 @@ export function BabylonCanvas({ onReady, plantFractions }: CanvasProps): JSX.Ele
     return () => {
       cancelled = true;
       if (resize) window.removeEventListener('resize', resize);
+      if (inspectorToggle) window.removeEventListener('keydown', inspectorToggle);
       sceneRef.current?.dispose();
       engineRef?.dispose();
     };

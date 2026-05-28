@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "sim-bff (tsx, watch)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/apps/sim-bff/node_modules/.bin/tsx",
+      "runtimeArgs": ["watch", "src/index.ts"],
+      "cwd": "${workspaceFolder}/apps/sim-bff",
+      "env": {
+        "NODE_ENV": "development",
+        "HOST": "0.0.0.0",
+        "PORT": "4100",
+        "LOG_LEVEL": "info"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Web (Chrome → http://localhost:5173)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173/",
+      "webRoot": "${workspaceFolder}/apps/web/src",
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome",
+      "sourceMaps": true,
+      "runtimeArgs": ["--auto-open-devtools-for-tabs", "--enable-unsafe-webgpu"]
+    },
+    {
+      "name": "Vitest — current file",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/vitest",
+      "runtimeArgs": ["run", "${relativeFile}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full stack (sim-bff + Chrome)",
+      "configurations": ["sim-bff (tsx, watch)", "Web (Chrome → http://localhost:5173)"]
+    }
+  ]
+}

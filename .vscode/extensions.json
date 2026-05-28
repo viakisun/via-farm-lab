@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "redhat.vscode-yaml",
+    "42crunch.vscode-openapi",
+    "eamodio.gitlens",
+    "ms-azuretools.vscode-docker",
+    "ms-playwright.playwright",
+    "vitest.explorer",
+    "babylonjs.babylon-snippets",
+    "mikestead.dotenv",
+    "yoavbls.pretty-ts-errors",
+    "ms-vscode.vscode-typescript-next"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify",
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    "deque-systems.vscode-axe-linter"
+  ]
+}

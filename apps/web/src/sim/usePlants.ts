@@ -6,6 +6,8 @@
 // own. Future refactor (PR 41) consolidates into @via-farm-lab/data.
 import { useEffect, useState } from 'react';
 
+import { bffWsUrl } from './bff-url';
+
 export interface PlantSnapshot {
   readonly plotId: string;
   readonly biomass: number;
@@ -19,8 +21,6 @@ interface StreamMessage {
   readonly payload: unknown;
 }
 
-declare const __SIM_BFF_WS_URL__: string;
-
 export function usePlants(): readonly PlantSnapshot[] {
   const [plants, setPlants] = useState<readonly PlantSnapshot[]>([]);
 
@@ -32,7 +32,7 @@ export function usePlants(): readonly PlantSnapshot[] {
 
     const connect = (): void => {
       if (cancelled) return;
-      ws = new WebSocket(`${__SIM_BFF_WS_URL__}/sim/stream`);
+      ws = new WebSocket(bffWsUrl('/sim/stream'));
 
       ws.addEventListener('message', (event: MessageEvent<string>) => {
         if (cancelled) return;

@@ -1,11 +1,10 @@
-// Babylon canvas — WebGPU preferred, WebGL2 fallback. Boots an empty scene
-// with a single rotating crate placeholder (sized to match a 1m × 1m × 1m
-// reference). Real scene composition lands in PR 33+ (room shell, racks,
-// plants).
+// Babylon canvas — WebGPU preferred, WebGL2 fallback. Composes the room
+// shell (PR 33). Racks / equipment / plants land in subsequent PRs.
 import {
   ArcRotateCamera,
   Color3,
   Color4,
+  DirectionalLight,
   Engine,
   HemisphericLight,
   MeshBuilder,
@@ -15,6 +14,8 @@ import {
   WebGPUEngine,
 } from '@babylonjs/core';
 import { useEffect, useRef, useState, type JSX } from 'react';
+
+import { buildRoom, ROOM_DIMS } from './room';
 
 export interface CanvasProps {
   /** Optional callback so the parent can react when the engine reports ready. */
@@ -52,31 +53,51 @@ function buildScene(engine: Engine): Scene {
   // Dark background — matches LOCALISATION §4.3 dark mode 1st-class.
   scene.clearColor = new Color4(0.063, 0.078, 0.094, 1);
 
-  const camera = new ArcRotateCamera('camera', Math.PI / 4, Math.PI / 3, 6, Vector3.Zero(), scene);
+  // Arc-rotate camera framed for the whole room. Radius is roughly the
+  // room diagonal so the operator can orbit while staying outside.
+  const diagonal = Math.sqrt(ROOM_DIMS.widthM ** 2 + ROOM_DIMS.depthM ** 2);
+  const camera = new ArcRotateCamera(
+    'camera',
+    Math.PI * 1.25, // alpha — front-left, looking towards the door (east) wall
+    Math.PI * 0.28, // beta — slightly above so we look down into the room
+    diagonal * 1.5,
+    new Vector3(0, ROOM_DIMS.heightM * 0.4, 0),
+    scene,
+  );
   camera.attachControl(true);
-  camera.minZ = 0.1;
-  camera.wheelPrecision = 30;
+  camera.minZ = 0.05;
+  camera.maxZ = 100;
+  camera.lowerRadiusLimit = 2;
+  camera.upperRadiusLimit = 25;
+  camera.wheelDeltaPercentage = 0.02;
+  camera.pinchDeltaPercentage = 0.02;
 
-  const light = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
-  light.intensity = 0.95;
+  // Hemispheric fill so the inside of the room reads even without panel lights.
+  const hemi = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
+  hemi.intensity = 0.65;
+  hemi.groundColor = new Color3(0.15, 0.15, 0.18);
 
-  const box = MeshBuilder.CreateBox('placeholder', { size: 1 }, scene);
-  const mat = new StandardMaterial('placeholder-mat', scene);
-  mat.diffuseColor = new Color3(0.13, 0.7, 0.45); // brand-ish emerald
-  mat.specularColor = new Color3(0.2, 0.2, 0.2);
-  box.material = mat;
+  // Soft directional sun for outside-the-room views (window casts light in
+  // once the cutout is glazed in PR 34).
+  const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.2), scene);
+  sun.intensity = 0.45;
+  sun.position = new Vector3(5, 8, 5);
 
-  // Ground reference plane so the box has scale context.
-  const ground = MeshBuilder.CreateGround('ground', { width: 10, height: 10 }, scene);
-  const groundMat = new StandardMaterial('ground-mat', scene);
-  groundMat.diffuseColor = new Color3(0.13, 0.13, 0.16);
-  groundMat.specularColor = new Color3(0, 0, 0);
-  ground.material = groundMat;
+  buildRoom(scene, { ceilingVisible: false });
 
-  scene.onBeforeRenderObservable.add(() => {
-    box.rotation.y += 0.008;
-    box.rotation.x += 0.003;
-  });
+  // North-arrow gizmo at the origin for orientation (gets replaced by a
+  // proper compass in PR 88 dashboard).
+  const arrowMat = new StandardMaterial('mat-north', scene);
+  arrowMat.diffuseColor = new Color3(0.85, 0.3, 0.3);
+  arrowMat.specularColor = new Color3(0, 0, 0);
+  const arrow = MeshBuilder.CreateCylinder(
+    'north-arrow',
+    { diameterTop: 0, diameterBottom: 0.15, height: 0.3 },
+    scene,
+  );
+  arrow.position = new Vector3(0, 0.16, -ROOM_DIMS.depthM / 2 + 0.3);
+  arrow.rotation.x = Math.PI;
+  arrow.material = arrowMat;
 
   return scene;
 }

@@ -1,13 +1,9 @@
 // Babylon canvas — WebGPU preferred, WebGL2 fallback. Composes the room
-// shell (PR 33) + plants (PR 25). Racks / equipment / lights land in
-// subsequent PRs.
+// shell (PR 33), cinematic lighting + post FX, and plants (PR 25).
 import {
   ArcRotateCamera,
   Color3,
-  Color4,
-  DirectionalLight,
   Engine,
-  HemisphericLight,
   MeshBuilder,
   Scene,
   StandardMaterial,
@@ -16,7 +12,8 @@ import {
 } from '@babylonjs/core';
 import { useEffect, useRef, useState, type JSX } from 'react';
 
-import { buildPlants, type PlantsAccessor } from './plants';
+import { buildLighting } from './lighting';
+import { buildPlants, PLOT_LAYOUT_INFO, type PlantsAccessor } from './plants';
 import { buildRoom, ROOM_DIMS } from './room';
 
 export interface CanvasProps {
@@ -30,7 +27,6 @@ async function createEngine(canvas: HTMLCanvasElement): Promise<{
   engine: Engine;
   backend: 'webgpu' | 'webgl2';
 }> {
-  // Browsers that expose `navigator.gpu` and where Babylon's WebGPU shim works.
   if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
     try {
       const webgpu = new WebGPUEngine(canvas, {
@@ -41,7 +37,7 @@ async function createEngine(canvas: HTMLCanvasElement): Promise<{
       await webgpu.initAsync();
       return { engine: webgpu as unknown as Engine, backend: 'webgpu' };
     } catch {
-      // Fall through to WebGL2.
+      // fall through
     }
   }
   const engine = new Engine(canvas, true, {
@@ -54,55 +50,57 @@ async function createEngine(canvas: HTMLCanvasElement): Promise<{
 
 function buildScene(engine: Engine): Scene {
   const scene = new Scene(engine);
-  // Dark background — matches LOCALISATION §4.3 dark mode 1st-class.
-  scene.clearColor = new Color4(0.063, 0.078, 0.094, 1);
 
-  // High-angle view from outside the south wall, looking down through the
-  // open ceiling at the bed area. 8 plot canopies visible along two rows.
+  // Cutaway "dollhouse" framing matching the reference render: camera in
+  // front (south), elevated, looking down-and-forward at the bed area.
+  // South wall is hidden by room.ts so the viewer sees in.
+  // Eye-level cutaway view, looking from outside the south wall into the
+  // room. Beds (y≈0.85) sit in the lower-middle of frame; ceiling strips
+  // + LED bars in the upper half.
+  // "Inside the room" cutaway view — south wall hidden so the viewer
+  // sees in. Beds + plants centred in the lower-middle of frame.
   const camera = new ArcRotateCamera(
     'camera',
-    Math.PI * 0.5,
-    Math.PI * 0.32,
+    Math.PI / 2 + 0.15,
+    Math.PI * 0.42,
     3.6,
-    new Vector3(0, 0.85, 0),
+    new Vector3(-0.3, 0.85, 0),
     scene,
   );
   camera.attachControl(true);
+  camera.fov = 1.15;
   camera.minZ = 0.05;
   camera.maxZ = 100;
-  camera.lowerRadiusLimit = 1.5;
-  camera.upperRadiusLimit = 25;
+  camera.lowerRadiusLimit = 2;
+  camera.upperRadiusLimit = 16;
   camera.wheelDeltaPercentage = 0.02;
   camera.pinchDeltaPercentage = 0.02;
+  camera.lowerBetaLimit = 0.1;
+  camera.upperBetaLimit = Math.PI / 2 - 0.05;
 
-  // Hemispheric fill so the inside of the room reads even without panel lights.
-  const hemi = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.85;
-  hemi.groundColor = new Color3(0.15, 0.15, 0.18);
-
-  // Soft directional sun for outside-the-room views (window glazes in PR 34).
-  const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.2), scene);
-  sun.intensity = 0.45;
-  sun.position = new Vector3(5, 8, 5);
-
-  buildRoom(scene, { ceilingVisible: false });
+  buildRoom(scene, { ceilingVisible: true, cutawayWall: 'south' });
 
   // Plants live in scene from the start; their scale gets driven by
-  // biomass updates handed in via props (see BabylonCanvas effect below).
+  // biomass updates handed in via props.
   const plants = buildPlants(scene);
   scene.metadata = { plants };
 
-  // North-arrow gizmo at the origin for orientation (replaced by a
-  // proper compass in PR 88 dashboard).
+  buildLighting(scene, engine, {
+    bedRowsZ: PLOT_LAYOUT_INFO.bedRowsZ,
+    bedSpanX: PLOT_LAYOUT_INFO.bedSpanX,
+  });
+
+  // Tiny orientation gizmo at the origin — easy to remove once the
+  // dashboard compass arrives (PR 88).
   const arrowMat = new StandardMaterial('mat-north', scene);
   arrowMat.diffuseColor = new Color3(0.85, 0.3, 0.3);
   arrowMat.specularColor = new Color3(0, 0, 0);
   const arrow = MeshBuilder.CreateCylinder(
     'north-arrow',
-    { diameterTop: 0, diameterBottom: 0.15, height: 0.3 },
+    { diameterTop: 0, diameterBottom: 0.08, height: 0.2 },
     scene,
   );
-  arrow.position = new Vector3(0, 0.16, -ROOM_DIMS.depthM / 2 + 0.3);
+  arrow.position = new Vector3(0, 0.11, -ROOM_DIMS.depthM / 2 + 0.18);
   arrow.rotation.x = Math.PI;
   arrow.material = arrowMat;
 
@@ -148,7 +146,6 @@ export function BabylonCanvas({ onReady, plantFractions }: CanvasProps): JSX.Ele
     };
   }, [onReady]);
 
-  // Apply incoming biomass fractions to the plant meshes whenever they change.
   useEffect(() => {
     if (!plantFractions) return;
     const scene = sceneRef.current;

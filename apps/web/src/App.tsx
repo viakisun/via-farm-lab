@@ -21,8 +21,9 @@ export function App(): JSX.Element {
     <main className="relative h-screen w-screen overflow-hidden bg-[var(--color-bg)] text-[var(--color-text)]">
       <BabylonCanvas onReady={(info) => setBackend(info.backend)} plantFractions={plantFractions} />
 
-      {/* HUD — clock + connection state */}
-      <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-sm">
+      {/* HUD — clock + connection state. Top-right so the scene reads
+          uninterrupted from the left (matches reference render layout). */}
+      <div className="pointer-events-none absolute right-4 top-4 z-10 w-80 max-w-[90vw]">
         <Card className="pointer-events-auto bg-[var(--color-surface-raised)]/85 backdrop-blur">
           <header className="mb-3">
             <h1 className="text-lg font-semibold tracking-tight">VIAFARM Digital Twin</h1>

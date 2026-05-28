@@ -13,7 +13,7 @@ catalog:
   '@types/react-dom': ^19.0.0
 
   # TypeScript
-  typescript: ^5.7.0
+  typescript: ^6.0.3
 
   # Node tooling
   '@types/node': ^22.0.0

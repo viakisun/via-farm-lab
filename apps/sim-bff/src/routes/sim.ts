@@ -18,6 +18,17 @@ import type { WebSocket } from 'ws';
 import { z } from 'zod';
 
 import { getSimClock } from '../sim/clock-singleton';
+import { getBiomassModel } from '../sim/plants-singleton';
+
+/** How often (in ticks) to broadcast a full biomass snapshot. */
+const BIOMASS_BROADCAST_EVERY_TICKS = 3;
+
+interface PlantSnapshot {
+  readonly plotId: string;
+  readonly biomass: number;
+  readonly ageDays: number;
+  readonly fraction: number;
+}
 
 const SeekBody = z.object({
   targetMs: z.number().int().nonnegative(),
@@ -36,9 +47,25 @@ interface ClockState {
 }
 
 interface StreamMessage {
-  readonly type: 'tick' | 'status' | 'jumped' | 'speed' | 'heartbeat';
+  readonly type: 'tick' | 'status' | 'jumped' | 'speed' | 'heartbeat' | 'plants';
   readonly at: string;
   readonly payload: unknown;
+}
+
+function snapshotPlants(nowMs: number): PlantSnapshot[] {
+  const model = getBiomassModel();
+  const out: PlantSnapshot[] = [];
+  for (const [plotId, state] of model.snapshotAll(nowMs)) {
+    out.push({
+      plotId,
+      biomass: state.biomass,
+      ageDays: state.ageDays,
+      // Normalised 0..1 for the renderer; uses the default K (100) so
+      // scaling is consistent across plots without per-plot K lookup.
+      fraction: Math.min(1, state.biomass / 100),
+    });
+  }
+  return out;
 }
 
 function snapshotClock(): ClockState {
@@ -56,6 +83,8 @@ function snapshotClock(): ClockState {
 export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
   // ── REST ──────────────────────────────────────────────────────────────
   app.get('/sim/clock', (): ClockState => snapshotClock());
+
+  app.get('/sim/plants', (): PlantSnapshot[] => snapshotPlants(getSimClock().getSimTimeMs()));
 
   app.post('/sim/clock/start', (): ClockState => {
     getSimClock().start();
@@ -123,6 +152,13 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
       at: new Date().toISOString(),
       payload: snapshotClock(),
     });
+    // Initial biomass snapshot so the client can render plants before the
+    // first throttled biomass broadcast arrives.
+    send({
+      type: 'plants',
+      at: new Date().toISOString(),
+      payload: snapshotPlants(clock.getSimTimeMs()),
+    });
 
     const onTick = (e: TickEvent): void => {
       send({
@@ -130,6 +166,16 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
         at: new Date(e.wallTimeMs).toISOString(),
         payload: e,
       });
+      // Throttled biomass broadcast — every Nth tick to keep the wire
+      // quiet while sim time is moving slowly. At 100× speed (full demo)
+      // this is still ~33 plants snapshots/sec, which is fine.
+      if (e.tick % BIOMASS_BROADCAST_EVERY_TICKS === 0) {
+        send({
+          type: 'plants',
+          at: new Date(e.wallTimeMs).toISOString(),
+          payload: snapshotPlants(e.simTimeMs),
+        });
+      }
     };
     const onStatus = (status: ClockStatus): void => {
       send({

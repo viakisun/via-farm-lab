@@ -1,17 +1,25 @@
 import { Button, Card } from '@via-farm-lab/ui';
-import { useState, type JSX } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 
 import { BabylonCanvas } from './babylon/Canvas';
 import { simControls } from './sim/controls';
+import { usePlants } from './sim/usePlants';
 import { useSimStream } from './sim/useSimStream';
 
 export function App(): JSX.Element {
   const { snapshot, connected } = useSimStream();
+  const plants = usePlants();
   const [backend, setBackend] = useState<'webgpu' | 'webgl2' | null>(null);
+
+  const plantFractions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of plants) m.set(p.plotId, p.fraction);
+    return m;
+  }, [plants]);
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-[var(--color-bg)] text-[var(--color-text)]">
-      <BabylonCanvas onReady={(info) => setBackend(info.backend)} />
+      <BabylonCanvas onReady={(info) => setBackend(info.backend)} plantFractions={plantFractions} />
 
       {/* HUD — clock + connection state */}
       <div className="pointer-events-none absolute left-4 top-4 z-10 max-w-sm">
@@ -47,6 +55,8 @@ export function App(): JSX.Element {
             </dd>
             <dt className="text-[var(--color-text-muted)]">Speed</dt>
             <dd className="font-mono">{snapshot ? `${snapshot.speed}×` : '—'}</dd>
+            <dt className="text-[var(--color-text-muted)]">Plots</dt>
+            <dd className="font-mono">{plants.length}</dd>
           </dl>
 
           <div className="mt-4 flex flex-wrap gap-2">

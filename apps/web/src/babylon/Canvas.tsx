@@ -1,5 +1,6 @@
 // Babylon canvas — WebGPU preferred, WebGL2 fallback. Composes the room
-// shell (PR 33). Racks / equipment / plants land in subsequent PRs.
+// shell (PR 33) + plants (PR 25). Racks / equipment / lights land in
+// subsequent PRs.
 import {
   ArcRotateCamera,
   Color3,
@@ -15,11 +16,14 @@ import {
 } from '@babylonjs/core';
 import { useEffect, useRef, useState, type JSX } from 'react';
 
+import { buildPlants, type PlantsAccessor } from './plants';
 import { buildRoom, ROOM_DIMS } from './room';
 
 export interface CanvasProps {
   /** Optional callback so the parent can react when the engine reports ready. */
   readonly onReady?: (info: { backend: 'webgpu' | 'webgl2'; engine: Engine }) => void;
+  /** Latest biomass snapshots (plotId → fraction). The parent owns the WS. */
+  readonly plantFractions?: ReadonlyMap<string, number>;
 }
 
 async function createEngine(canvas: HTMLCanvasElement): Promise<{
@@ -53,39 +57,42 @@ function buildScene(engine: Engine): Scene {
   // Dark background — matches LOCALISATION §4.3 dark mode 1st-class.
   scene.clearColor = new Color4(0.063, 0.078, 0.094, 1);
 
-  // Arc-rotate camera framed for the whole room. Radius is roughly the
-  // room diagonal so the operator can orbit while staying outside.
-  const diagonal = Math.sqrt(ROOM_DIMS.widthM ** 2 + ROOM_DIMS.depthM ** 2);
+  // High-angle view from outside the south wall, looking down through the
+  // open ceiling at the bed area. 8 plot canopies visible along two rows.
   const camera = new ArcRotateCamera(
     'camera',
-    Math.PI * 1.25, // alpha — front-left, looking towards the door (east) wall
-    Math.PI * 0.28, // beta — slightly above so we look down into the room
-    diagonal * 1.5,
-    new Vector3(0, ROOM_DIMS.heightM * 0.4, 0),
+    Math.PI * 0.5,
+    Math.PI * 0.32,
+    3.6,
+    new Vector3(0, 0.85, 0),
     scene,
   );
   camera.attachControl(true);
   camera.minZ = 0.05;
   camera.maxZ = 100;
-  camera.lowerRadiusLimit = 2;
+  camera.lowerRadiusLimit = 1.5;
   camera.upperRadiusLimit = 25;
   camera.wheelDeltaPercentage = 0.02;
   camera.pinchDeltaPercentage = 0.02;
 
   // Hemispheric fill so the inside of the room reads even without panel lights.
   const hemi = new HemisphericLight('hemi', new Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.65;
+  hemi.intensity = 0.85;
   hemi.groundColor = new Color3(0.15, 0.15, 0.18);
 
-  // Soft directional sun for outside-the-room views (window casts light in
-  // once the cutout is glazed in PR 34).
+  // Soft directional sun for outside-the-room views (window glazes in PR 34).
   const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.2), scene);
   sun.intensity = 0.45;
   sun.position = new Vector3(5, 8, 5);
 
   buildRoom(scene, { ceilingVisible: false });
 
-  // North-arrow gizmo at the origin for orientation (gets replaced by a
+  // Plants live in scene from the start; their scale gets driven by
+  // biomass updates handed in via props (see BabylonCanvas effect below).
+  const plants = buildPlants(scene);
+  scene.metadata = { plants };
+
+  // North-arrow gizmo at the origin for orientation (replaced by a
   // proper compass in PR 88 dashboard).
   const arrowMat = new StandardMaterial('mat-north', scene);
   arrowMat.diffuseColor = new Color3(0.85, 0.3, 0.3);
@@ -102,13 +109,13 @@ function buildScene(engine: Engine): Scene {
   return scene;
 }
 
-export function BabylonCanvas({ onReady }: CanvasProps): JSX.Element {
+export function BabylonCanvas({ onReady, plantFractions }: CanvasProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let engineRef: Engine | null = null;
-    let sceneRef: Scene | null = null;
     let cancelled = false;
     let resize: (() => void) | null = null;
 
@@ -123,7 +130,7 @@ export function BabylonCanvas({ onReady }: CanvasProps): JSX.Element {
         }
         engineRef = engine;
         const scene = buildScene(engine);
-        sceneRef = scene;
+        sceneRef.current = scene;
         engine.runRenderLoop(() => scene.render());
         resize = () => engine.resize();
         window.addEventListener('resize', resize);
@@ -136,10 +143,22 @@ export function BabylonCanvas({ onReady }: CanvasProps): JSX.Element {
     return () => {
       cancelled = true;
       if (resize) window.removeEventListener('resize', resize);
-      sceneRef?.dispose();
+      sceneRef.current?.dispose();
       engineRef?.dispose();
     };
   }, [onReady]);
+
+  // Apply incoming biomass fractions to the plant meshes whenever they change.
+  useEffect(() => {
+    if (!plantFractions) return;
+    const scene = sceneRef.current;
+    if (!scene) return;
+    const meta = scene.metadata as { plants?: PlantsAccessor } | undefined;
+    if (!meta?.plants) return;
+    for (const [plotId, fraction] of plantFractions) {
+      meta.plants.setFraction(plotId, fraction);
+    }
+  }, [plantFractions]);
 
   if (error) {
     return (

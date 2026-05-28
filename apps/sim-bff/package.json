@@ -25,7 +25,8 @@
     "fastify": "catalog:",
     "fastify-plugin": "catalog:",
     "prom-client": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@via-farm-lab/sim-models": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

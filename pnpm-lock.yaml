@@ -278,6 +278,9 @@ importers:
       '@via-farm-lab/sim-core':
         specifier: workspace:*
         version: link:../../packages/sim-core
+      '@via-farm-lab/sim-models':
+        specifier: workspace:*
+        version: link:../../packages/sim-models
       '@via-farm-lab/telemetry':
         specifier: workspace:*
         version: link:../../packages/telemetry

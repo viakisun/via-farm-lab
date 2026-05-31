@@ -51,7 +51,7 @@
     "lint-staged": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-organize-imports": "catalog:",
-    "turbo": "^2.3.0",
+    "turbo": "^2.9.16",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"

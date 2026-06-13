@@ -6,8 +6,14 @@ import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AppConfig } from './config';
+import { anomalyRoutes } from './routes/anomalies';
+import { cropRoutes } from './routes/crops';
+import { experimentRoutes } from './routes/experiments';
 import { healthRoutes } from './routes/health';
 import { metricsRoutes } from './routes/metrics';
+import { nutrientRoutes } from './routes/nutrient';
+import { observationRoutes } from './routes/observations';
+import { scenarioRoutes } from './routes/scenarios';
 import { simRoutes } from './routes/sim';
 
 export interface BuildServerOptions {
@@ -47,6 +53,12 @@ export async function buildServer(opts: BuildServerOptions): Promise<FastifyInst
   await app.register(healthRoutes);
   await app.register(metricsRoutes);
   await app.register(simRoutes);
+  await app.register(experimentRoutes);
+  await app.register(observationRoutes);
+  await app.register(cropRoutes);
+  await app.register(scenarioRoutes);
+  await app.register(anomalyRoutes);
+  await app.register(nutrientRoutes);
 
   app.get('/', () => ({ service: 'via-farm-lab/sim-bff', status: 'ok' }));
 

@@ -17,11 +17,24 @@ import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import type { WebSocket } from 'ws';
 import { z } from 'zod';
 
+import { hourOfDay, lightIntensityFactor } from '@via-farm-lab/sim-models';
+
 import { getSimClock } from '../sim/clock-singleton';
+import { hydrateRunningExperiments, poolStateFor, tickExperiments } from '../sim/experiment-runner';
+import { getMultiFactorModel } from '../sim/multi-factor-singleton';
 import { getBiomassModel } from '../sim/plants-singleton';
 
-/** How often (in ticks) to broadcast a full biomass snapshot. */
-const BIOMASS_BROADCAST_EVERY_TICKS = 3;
+/** How often (in ticks) to broadcast a full biomass snapshot.
+ *  At the 60 Hz tick cadence this caps plant updates at ~10 Hz, which is
+ *  more than enough for a smooth grow-cycle visual and well below what
+ *  React + WebSocket can comfortably push. */
+const BIOMASS_BROADCAST_EVERY_TICKS = 6;
+
+/** How often (in ticks) to forward the lightweight tick event to clients.
+ *  The clock can fire at up to 60 Hz; pushing every fire saturates React.
+ *  Coalescing to ~10 Hz keeps the timeline / scrubber smooth without
+ *  flooding the wire. */
+const TICK_BROADCAST_EVERY_TICKS = 6;
 
 interface PlantSnapshot {
   readonly plotId: string;
@@ -47,9 +60,47 @@ interface ClockState {
 }
 
 interface StreamMessage {
-  readonly type: 'tick' | 'status' | 'jumped' | 'speed' | 'heartbeat' | 'plants';
+  readonly type: 'tick' | 'status' | 'jumped' | 'speed' | 'heartbeat' | 'plants' | 'multi-metric';
   readonly at: string;
   readonly payload: unknown;
+}
+
+interface MultiMetricSnapshot {
+  readonly plotId: string;
+  readonly cropId: string | undefined;
+  readonly ageDays: number;
+  readonly biomass: number;
+  readonly canopyHeightCm: number;
+  readonly leafAreaCm2: number;
+  readonly leafCount: number;
+  readonly colorHealth: number;
+  readonly effectiveR: number;
+  /** Current nutrient pool EC (mS/cm). Undefined if the plot has no pool. */
+  readonly poolEC?: number;
+  /** Current nutrient pool pH (dimensionless). */
+  readonly poolPH?: number;
+}
+
+function snapshotMultiMetrics(nowMs: number): MultiMetricSnapshot[] {
+  const model = getMultiFactorModel();
+  const out: MultiMetricSnapshot[] = [];
+  for (const [plotId, s] of model.snapshotAll(nowMs)) {
+    if (!s) continue;
+    const pool = poolStateFor(plotId);
+    out.push({
+      plotId,
+      cropId: model.cropOf(plotId),
+      ageDays: s.ageDays,
+      biomass: s.biomass,
+      canopyHeightCm: s.canopyHeightCm,
+      leafAreaCm2: s.leafAreaCm2,
+      leafCount: s.leafCount,
+      colorHealth: s.colorHealth,
+      effectiveR: s.effectiveR,
+      ...(pool ? { poolEC: pool.EC, poolPH: pool.pH } : {}),
+    });
+  }
+  return out;
 }
 
 function snapshotPlants(nowMs: number): PlantSnapshot[] {
@@ -68,7 +119,11 @@ function snapshotPlants(nowMs: number): PlantSnapshot[] {
   return out;
 }
 
-function snapshotClock(): ClockState {
+function snapshotClock(): ClockState & {
+  readonly hourOfDay: number;
+  readonly lightFactor: number;
+  readonly simDay: number;
+} {
   const clock = getSimClock();
   const simTimeMs = clock.getSimTimeMs();
   return {
@@ -77,14 +132,24 @@ function snapshotClock(): ClockState {
     simTimeMs,
     simTimeIso: new Date(simTimeMs).toISOString(),
     speed: clock.getSpeed(),
+    hourOfDay: hourOfDay(simTimeMs),
+    lightFactor: lightIntensityFactor(simTimeMs),
+    simDay: Math.floor(simTimeMs / 86_400_000),
   };
 }
 
 export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
+  // Re-hydrate running experiments into the multi-factor model on startup.
+  hydrateRunningExperiments();
+
   // ── REST ──────────────────────────────────────────────────────────────
   app.get('/sim/clock', (): ClockState => snapshotClock());
 
   app.get('/sim/plants', (): PlantSnapshot[] => snapshotPlants(getSimClock().getSimTimeMs()));
+
+  app.get('/sim/multi-metric', (): MultiMetricSnapshot[] =>
+    snapshotMultiMetrics(getSimClock().getSimTimeMs()),
+  );
 
   app.post('/sim/clock/start', (): ClockState => {
     getSimClock().start();
@@ -159,21 +224,35 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
       at: new Date().toISOString(),
       payload: snapshotPlants(clock.getSimTimeMs()),
     });
+    send({
+      type: 'multi-metric',
+      at: new Date().toISOString(),
+      payload: snapshotMultiMetrics(clock.getSimTimeMs()),
+    });
 
     const onTick = (e: TickEvent): void => {
-      send({
-        type: 'tick',
-        at: new Date(e.wallTimeMs).toISOString(),
-        payload: e,
-      });
-      // Throttled biomass broadcast — every Nth tick to keep the wire
-      // quiet while sim time is moving slowly. At 100× speed (full demo)
-      // this is still ~33 plants snapshots/sec, which is fine.
-      if (e.tick % BIOMASS_BROADCAST_EVERY_TICKS === 0) {
+      // Always advance the model — keeps biomass & anomalies in sync with
+      // sim time even on ticks we choose not to broadcast.
+      tickExperiments(e.simTimeMs);
+      const broadcastTick = e.tick % TICK_BROADCAST_EVERY_TICKS === 0;
+      const broadcastSnapshot = e.tick % BIOMASS_BROADCAST_EVERY_TICKS === 0;
+      if (broadcastTick) {
+        send({
+          type: 'tick',
+          at: new Date(e.wallTimeMs).toISOString(),
+          payload: e,
+        });
+      }
+      if (broadcastSnapshot) {
         send({
           type: 'plants',
           at: new Date(e.wallTimeMs).toISOString(),
           payload: snapshotPlants(e.simTimeMs),
+        });
+        send({
+          type: 'multi-metric',
+          at: new Date(e.wallTimeMs).toISOString(),
+          payload: snapshotMultiMetrics(e.simTimeMs),
         });
       }
     };

@@ -12,26 +12,35 @@ import { getSimClock } from './clock-singleton';
 
 let instance: BiomassModel | null = null;
 
-const DEMO_PLOT_IDS = [
-  // farm  site  room  rack  bed   index
-  'pilot.syd.a.r01.b1.p1',
-  'pilot.syd.a.r01.b1.p2',
-  'pilot.syd.a.r01.b1.p3',
-  'pilot.syd.a.r01.b1.p4',
-  'pilot.syd.a.r02.b1.p1',
-  'pilot.syd.a.r02.b1.p2',
-  'pilot.syd.a.r02.b1.p3',
-  'pilot.syd.a.r02.b1.p4',
-] as const;
+/**
+ * 24-plot layout (Phase 2 experimental platform): 2 racks × 2 growing tiers
+ * × 6 plots along the bed length. bedKey b1 = tier 1 (middle), b2 = tier 2
+ * (top). Plot keys p1..p6 walk the bed from low X to high X.
+ */
+const RACK_IDS = ['r01', 'r02'] as const;
+const BED_KEYS = ['b1', 'b2'] as const;
+const PLOT_KEYS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'] as const;
+
+const DEMO_PLOT_IDS: readonly string[] = (() => {
+  const out: string[] = [];
+  for (const rack of RACK_IDS) {
+    for (const bed of BED_KEYS) {
+      for (const plot of PLOT_KEYS) {
+        out.push(`pilot.syd.a.${rack}.${bed}.${plot}`);
+      }
+    }
+  }
+  return out;
+})();
 
 const DAY_MS = 86_400_000;
 
-/** Stagger transplant by ~5 days per plot so we see varied growth stages. */
+/** Stagger transplant by ~2 days per plot so we see a smooth growth gradient
+ *  across all 24 plots. */
 function buildDemoTransplants(nowMs: number): Map<string, number> {
-  const staggerDays = [0, 5, 10, 15, 20, 25, 30, 35];
   const out = new Map<string, number>();
   for (let i = 0; i < DEMO_PLOT_IDS.length; i++) {
-    const daysAgo = staggerDays[i] ?? 0;
+    const daysAgo = i * 2;
     const plotId = DEMO_PLOT_IDS[i];
     if (!plotId) continue;
     out.set(plotId, nowMs - daysAgo * DAY_MS);

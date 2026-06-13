@@ -2,6 +2,8 @@
 // React-friendly snapshot. Auto-reconnects on close with exponential backoff.
 import { useEffect, useRef, useState } from 'react';
 
+import { bffWsUrl } from './bff-url';
+
 type ClockStatus = 'stopped' | 'running' | 'paused';
 
 export interface ClockSnapshot {
@@ -29,8 +31,6 @@ interface TickPayload {
   readonly simTimeMs: number;
   readonly wallTimeMs: number;
 }
-
-declare const __SIM_BFF_WS_URL__: string;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -69,9 +69,10 @@ export function useSimStream(): UseSimStream {
 
     const connect = (): void => {
       if (cancelled) return;
-      // Same-origin via Vite proxy in dev; absolute in prod.
-      const url = `${__SIM_BFF_WS_URL__}/sim/stream`;
-      const ws = new WebSocket(url);
+      // Same-origin via Vite proxy in dev; absolute configured origin in prod.
+      // bffWsUrl() falls back to window.location.host when the build constant
+      // is the localhost default, so we never bypass the proxy in dev.
+      const ws = new WebSocket(bffWsUrl('/sim/stream'));
       wsRef.current = ws;
 
       ws.addEventListener('open', () => {

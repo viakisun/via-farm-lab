@@ -60,6 +60,17 @@ tmp/
 packages/assets/_raw/
 packages/assets/_cache/
 
+# Claude Code personal settings (allowlist of tool permissions per developer)
+.claude/settings.local.json
+
+# Simulator runtime data — observation/experiment stores (JSON, can reach 100s of MB)
+**/.data/
+# Accidental nested cwd when BFF is started from the repo root
+apps/sim-bff/apps/
+
+# Local design references (binaries — see CLAUDE.md; use Git LFS under packages/assets if needed)
+_reference/
+
 # Sentry source maps (uploaded, not committed)
 .sentryclirc
 

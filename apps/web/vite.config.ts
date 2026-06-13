@@ -15,11 +15,11 @@ export default defineConfig(({ mode }) => {
       // Proxy /sim/* to the local sim-bff so the browser can hit a same-origin
       // path in dev. Production goes through the real domain instead.
       proxy: {
-        '/sim': {
-          target: bffUrl,
-          changeOrigin: true,
-          ws: true,
-        },
+        '/sim': { target: bffUrl, changeOrigin: true, ws: true },
+        '/experiments': { target: bffUrl, changeOrigin: true },
+        '/observations': { target: bffUrl, changeOrigin: true },
+        '/crops': { target: bffUrl, changeOrigin: true },
+        '/scenarios': { target: bffUrl, changeOrigin: true },
       },
     },
     define: {

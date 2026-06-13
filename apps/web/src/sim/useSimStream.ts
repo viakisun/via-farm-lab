@@ -10,6 +10,12 @@ export interface ClockSnapshot {
   readonly simTimeMs: number;
   readonly simTimeIso: string;
   readonly speed: number;
+  /** Hour-of-day 0..24, derived from simTimeMs by BFF. */
+  readonly hourOfDay?: number;
+  /** Sinusoidal lightFactor 0..1 for the current sim time. */
+  readonly lightFactor?: number;
+  /** Whole sim days since epoch. */
+  readonly simDay?: number;
 }
 
 interface StreamMessage {
@@ -25,6 +31,24 @@ interface TickPayload {
 }
 
 declare const __SIM_BFF_WS_URL__: string;
+
+const HOUR_MS = 3_600_000;
+const DAY_MS = 86_400_000;
+function deriveDiurnal(simTimeMs: number): {
+  hourOfDay: number;
+  lightFactor: number;
+  simDay: number;
+} {
+  const h = (((simTimeMs % DAY_MS) + DAY_MS) % DAY_MS) / HOUR_MS;
+  const lightOnHour = 6;
+  const photoperiodH = 16;
+  let lf = 0;
+  if (h >= lightOnHour && h < lightOnHour + photoperiodH) {
+    const t = (h - lightOnHour) / photoperiodH;
+    lf = Math.sin(Math.PI * t) ** 2;
+  }
+  return { hourOfDay: h, lightFactor: lf, simDay: Math.floor(simTimeMs / DAY_MS) };
+}
 
 export interface UseSimStream {
   readonly snapshot: ClockSnapshot | null;
@@ -65,6 +89,7 @@ export function useSimStream(): UseSimStream {
             setSnapshot(msg.payload as ClockSnapshot);
           } else if (msg.type === 'tick') {
             const tickPayload = msg.payload as TickPayload;
+            const diurnal = deriveDiurnal(tickPayload.simTimeMs);
             setSnapshot((prev) =>
               prev
                 ? {
@@ -72,6 +97,7 @@ export function useSimStream(): UseSimStream {
                     tick: tickPayload.tick,
                     simTimeMs: tickPayload.simTimeMs,
                     simTimeIso: new Date(tickPayload.simTimeMs).toISOString(),
+                    ...diurnal,
                   }
                 : null,
             );

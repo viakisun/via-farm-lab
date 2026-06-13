@@ -123,19 +123,30 @@ export class SimClock extends EventEmitter {
   // ─────────────────────────────────────────────────────────────────────
 
   private scheduleNext(): void {
-    // Wall-clock delay between ticks = tickMs / speed.
-    // For very high speeds we still floor at 1 ms to avoid hot-spinning.
-    const delayMs = Math.max(1, Math.floor(this.tickMs / this.speed));
+    // Wall-clock pacing. We pin the scheduler fire at ≥16 ms so the Node
+    // event loop has room to run handlers and so the WS broadcast rate
+    // stays bounded (≤60 Hz). At higher speeds the per-tick sim-time
+    // delta grows; tick handlers see a single tick that advances more
+    // than `tickMs` of simulated time.
+    //
+    // Examples (tickMs = 1000):
+    //   speed 1     → delay 1000 ms,  advance 1000 ms  ( 1 tick/sec live)
+    //   speed 100   → delay   16 ms,  advance 1600 ms  (60 Hz, 1.6 s/tick)
+    //   speed 10000 → delay   16 ms,  advance 160 s    (60 Hz, ~2.7 min/tick)
+    const MIN_DELAY_MS = 16;
+    const idealDelayMs = this.tickMs / this.speed;
+    const delayMs = Math.max(MIN_DELAY_MS, Math.floor(idealDelayMs));
+    const advanceMs = Math.max(this.tickMs, Math.round(delayMs * this.speed));
     this.timer = setTimeout(() => {
       if (this.status !== 'running') return;
-      this.doTick(Date.now());
+      this.doTick(Date.now(), advanceMs);
       this.scheduleNext();
     }, delayMs);
   }
 
-  private doTick(wallTimeMs: number): void {
+  private doTick(wallTimeMs: number, advanceMs: number = this.tickMs): void {
     this.tickNo += 1;
-    this.simTimeMs += this.tickMs;
+    this.simTimeMs += advanceMs;
     const evt: TickEvent = {
       tick: this.tickNo,
       simTimeMs: this.simTimeMs,
@@ -149,5 +160,8 @@ function clampSpeed(s: number): number {
   if (!Number.isFinite(s) || s <= 0) {
     throw new RangeError('SimClock: speed must be a positive finite number');
   }
-  return Math.min(Math.max(s, 0.1), 100);
+  // Cap at 100000× — the tick handler does fixed work per tick, so wall-time
+  // load is independent of multiplier. The high end is for scrubbing demos
+  // across multi-day scenarios in seconds.
+  return Math.min(Math.max(s, 0.1), 100_000);
 }

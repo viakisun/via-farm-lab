@@ -43,12 +43,14 @@ describe('SimClock', () => {
     expect(() => c.setSpeed(Number.POSITIVE_INFINITY)).toThrow(RangeError);
   });
 
-  it('clamps speed to [0.1, 100]', () => {
+  it('clamps speed to [0.1, 100000]', () => {
     const c = new SimClock();
     c.setSpeed(0.05);
     expect(c.getSpeed()).toBe(0.1);
-    c.setSpeed(1000);
-    expect(c.getSpeed()).toBe(100);
+    c.setSpeed(1_000_000);
+    expect(c.getSpeed()).toBe(100_000);
+    c.setSpeed(10_000);
+    expect(c.getSpeed()).toBe(10_000);
   });
 
   it('start/pause toggles status correctly', () => {

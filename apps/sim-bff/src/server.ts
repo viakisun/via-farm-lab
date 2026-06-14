@@ -7,6 +7,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AppConfig } from './config';
 import { anomalyRoutes } from './routes/anomalies';
+import { commissioningRoutes } from './routes/commissioning';
 import { cropRoutes } from './routes/crops';
 import { experimentRoutes } from './routes/experiments';
 import { healthRoutes } from './routes/health';
@@ -59,6 +60,7 @@ export async function buildServer(opts: BuildServerOptions): Promise<FastifyInst
   await app.register(scenarioRoutes);
   await app.register(anomalyRoutes);
   await app.register(nutrientRoutes);
+  await app.register(commissioningRoutes);
 
   app.get('/', () => ({ service: 'via-farm-lab/sim-bff', status: 'ok' }));
 

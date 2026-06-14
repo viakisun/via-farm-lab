@@ -20,6 +20,7 @@ import { z } from 'zod';
 import { hourOfDay, lightIntensityFactor } from '@via-farm-lab/sim-models';
 
 import { getSimClock } from '../sim/clock-singleton';
+import { commissioningSnapshot, tickCommissioning } from '../sim/commissioning-singleton';
 import { hydrateRunningExperiments, poolStateFor, tickExperiments } from '../sim/experiment-runner';
 import { getMultiFactorModel } from '../sim/multi-factor-singleton';
 import { getBiomassModel } from '../sim/plants-singleton';
@@ -60,7 +61,15 @@ interface ClockState {
 }
 
 interface StreamMessage {
-  readonly type: 'tick' | 'status' | 'jumped' | 'speed' | 'heartbeat' | 'plants' | 'multi-metric';
+  readonly type:
+    | 'tick'
+    | 'status'
+    | 'jumped'
+    | 'speed'
+    | 'heartbeat'
+    | 'plants'
+    | 'multi-metric'
+    | 'commissioning';
   readonly at: string;
   readonly payload: unknown;
 }
@@ -229,11 +238,17 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
       at: new Date().toISOString(),
       payload: snapshotMultiMetrics(clock.getSimTimeMs()),
     });
+    send({
+      type: 'commissioning',
+      at: new Date().toISOString(),
+      payload: commissioningSnapshot(clock.getSimTimeMs()),
+    });
 
     const onTick = (e: TickEvent): void => {
-      // Always advance the model — keeps biomass & anomalies in sync with
-      // sim time even on ticks we choose not to broadcast.
+      // Always advance the models — keeps biomass, pools & commissioning rigs
+      // in sync with sim time even on ticks we choose not to broadcast.
       tickExperiments(e.simTimeMs);
+      tickCommissioning(e.simTimeMs);
       const broadcastTick = e.tick % TICK_BROADCAST_EVERY_TICKS === 0;
       const broadcastSnapshot = e.tick % BIOMASS_BROADCAST_EVERY_TICKS === 0;
       if (broadcastTick) {
@@ -253,6 +268,11 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
           type: 'multi-metric',
           at: new Date(e.wallTimeMs).toISOString(),
           payload: snapshotMultiMetrics(e.simTimeMs),
+        });
+        send({
+          type: 'commissioning',
+          at: new Date(e.wallTimeMs).toISOString(),
+          payload: commissioningSnapshot(e.simTimeMs),
         });
       }
     };

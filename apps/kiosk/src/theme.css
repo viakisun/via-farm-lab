@@ -1,0 +1,58 @@
+/* VIA Kiosk theme — same bespoke "greenhouse" dark system as the console design. */
+
+:root {
+  --c-bg: #0a130e;
+  --c-sidebar: #0e1a14;
+  --c-card: #13211a;
+  --c-raised: #182c22;
+  --c-lime: #a6e26b;
+  --c-sky: #6fb7e8;
+  --c-amber: #e9c45c;
+  --c-coral: #e8836b;
+  --c-teal: #5fae9e;
+  --c-ink: #ecf3ed;
+  --c-ink-2: #c7d6cc;
+  --c-muted: #9db3a4;
+  --c-muted-2: #7c9387;
+  --c-faint: #5e7468;
+  --font-ui: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes vfpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}

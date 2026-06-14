@@ -1,0 +1,60 @@
+/* VIA Web Console theme — bespoke "greenhouse" dark system from the design.
+   Intentionally distinct from @via-farm-lab/ui (OKLch/Inter); this app owns its look. */
+
+:root {
+  /* Surfaces */
+  --c-bg: #0a130e;
+  --c-sidebar: #0e1a14;
+  --c-card: #13211a;
+  --c-raised: #182c22;
+  --c-inset: rgba(8, 16, 12, 0.45);
+
+  /* Accents */
+  --c-lime: #a6e26b; /* primary / positive */
+  --c-sky: #6fb7e8; /* info */
+  --c-amber: #e9c45c; /* caution */
+  --c-coral: #e8836b; /* risk */
+
+  /* Ink */
+  --c-ink: #ecf3ed;
+  --c-ink-2: #c7d6cc;
+  --c-muted: #9db3a4;
+  --c-muted-2: #7c9387;
+  --c-faint: #5e7468;
+  --c-faint-2: #3e4e45;
+
+  /* Lines */
+  --c-line: rgba(255, 255, 255, 0.06);
+  --c-line-2: rgba(255, 255, 255, 0.04);
+
+  --font-ui: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}

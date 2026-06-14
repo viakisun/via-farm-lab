@@ -1,0 +1,33 @@
+{
+  "name": "@via-farm-lab/console",
+  "version": "0.0.0",
+  "private": true,
+  "description": "VIA Web Console — standalone desktop research/experiment-design app. Mock data only (no BFF wiring yet). Localised en-AU.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --max-warnings=0",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "catalog:",
+    "happy-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^5.4.0",
+    "vitest": "catalog:"
+  }
+}

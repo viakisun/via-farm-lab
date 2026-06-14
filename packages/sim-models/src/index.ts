@@ -11,6 +11,17 @@ export {
   type BiomassState,
   type MultiMetricState,
 } from './biomass';
+export { expectedEC, expectedPH, recipeForTarget } from './commissioning/mixing';
+export { CommissioningModel, type RigSnapshot } from './commissioning/model';
+export {
+  COMMISSION_PARAMS,
+  makeRig,
+  type CommissionTarget,
+  type Recipe,
+  type RigState,
+  type Signal,
+  type Verdict,
+} from './commissioning/state';
 export {
   CROP_CATALOG,
   allCrops,

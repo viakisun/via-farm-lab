@@ -76,7 +76,7 @@ catalog:
 
   # OpenAPI tooling
   'openapi-typescript': ^7.5.0
-  '@redocly/cli': ^1.27.0
+  '@redocly/cli': ^2.31.5
 
   # Accessibility
   '@axe-core/playwright': ^4.10.0

@@ -24,12 +24,12 @@ catalog:
   '@babylonjs/inspector': ^7.0.0
 
   # Fastify (BFF)
-  fastify: ^5.0.0
+  fastify: ^5.9.0
   '@fastify/websocket': ^11.0.0
-  '@fastify/cors': ^10.0.0
+  '@fastify/cors': ^11.2.0
   '@fastify/helmet': ^13.0.0
-  '@fastify/rate-limit': ^10.2.0
-  'fastify-plugin': ^5.0.0
+  '@fastify/rate-limit': ^11.1.0
+  'fastify-plugin': ^6.0.0
   'prom-client': ^15.1.0
   tsx: ^4.19.0
   '@types/ws': ^8.5.0

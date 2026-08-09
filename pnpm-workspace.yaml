@@ -38,13 +38,13 @@ catalog:
   zod: ^3.23.0
 
   # Testing
-  vitest: ^2.1.0
-  '@vitest/coverage-v8': ^2.1.0
-  'happy-dom': ^15.11.0
-  '@playwright/test': ^1.49.0
+  vitest: ^4.1.10
+  '@vitest/coverage-v8': ^4.1.10
+  'happy-dom': ^20.11.1
+  '@playwright/test': ^1.62.1
   '@testing-library/react': ^16.1.0
-  '@testing-library/jest-dom': ^6.6.0
-  '@testing-library/user-event': ^14.5.0
+  '@testing-library/jest-dom': ^7.0.0
+  '@testing-library/user-event': ^14.6.3
 
   # Design system / UI
   tailwindcss: ^4.0.0

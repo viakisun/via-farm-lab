@@ -7,6 +7,8 @@ import { C, equalisedPpfd } from './data/derive';
 import { Analytics } from './modules/Analytics';
 import { Builder } from './modules/Builder';
 import { Commissioning } from './modules/Commissioning';
+import { Schedule } from './modules/Schedule';
+import { Settings } from './modules/Settings';
 import { Dashboard } from './modules/Dashboard';
 import { Devices } from './modules/Devices';
 import { Experiments } from './modules/Experiments';
@@ -84,6 +86,8 @@ export default function App() {
               />
             )}
             {mod === 'commissioning' && <Commissioning />}
+            {mod === 'settings' && <Settings />}
+            {mod === 'schedule' && <Schedule />}
             {mod === 'builder' && (
               <Builder
                 builder={builder}

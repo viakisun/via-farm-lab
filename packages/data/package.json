@@ -2,19 +2,26 @@
   "name": "@via-farm-lab/data",
   "version": "0.0.0",
   "private": true,
-  "description": "Placeholder. See PLAN.md for the PR that initialises this package.",
+  "description": "Shared BFF data layer — one WebSocket client, typed REST helpers, and React hooks consumed by the console + kiosk.",
   "type": "module",
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "react": "catalog:"
+  },
   "devDependencies": {
-    "typescript": "catalog:",
-    "vitest": "catalog:",
+    "@types/react": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "happy-dom": "catalog:"
+    "happy-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

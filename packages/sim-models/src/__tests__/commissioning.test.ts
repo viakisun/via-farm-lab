@@ -78,6 +78,25 @@ describe('CommissioningModel', () => {
     expect(snap?.verdicts.every((v) => v.signal === 'Pending')).toBe(true);
   });
 
+  it('configure() drives ramp speed, flow and tolerance from settings', () => {
+    const m = make();
+    m.configure(RIG, { flowRateLmin: 5, tauSec: 10 });
+    let now = 0;
+    m.command(RIG, { EC: 1.8, pH: 5.8, abRatio: 1 }, now);
+    for (let i = 0; i < 5; i++) m.advance(RIG, 1_000, (now += 1_000));
+    const s = m.snapshot(RIG, now);
+    expect(s?.config.flowRateLmin).toBe(5);
+    expect(s?.flowLmin).toBe(5); // pump runs at the configured rate while delivering
+    // tighter tau (10 s) ⇒ noticeable convergence after 5 s; default tau (90 s) would barely move
+    expect(s?.EC).toBeGreaterThan(1.6);
+    expect(s?.EC).toBeLessThan(1.8);
+  });
+
+  it('configure() returns undefined for unknown rigs', () => {
+    const m = make();
+    expect(m.configure('nope', { ecTol: 0.2 })).toBeUndefined();
+  });
+
   it('ignores unknown rigs', () => {
     const m = make();
     expect(m.command('nope', { EC: 1, pH: 6, abRatio: 1 }, 0)).toBeUndefined();

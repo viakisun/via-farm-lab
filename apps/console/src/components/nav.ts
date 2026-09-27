@@ -6,6 +6,8 @@ export const MODULE_LABEL: Record<ModuleId, string> = {
   analytics: 'Analytics Lab',
   report: 'Report Builder',
   commissioning: 'Commissioning',
+  settings: 'Nutrient Settings',
+  schedule: 'Schedule',
   builder: 'Experiment Builder',
   inputs: 'Input Registry',
   market: 'Market Feed',
@@ -28,6 +30,8 @@ export const NAV_TOP: NavItem[] = [
 
 export const NAV_BOTTOM: NavItem[] = [
   { id: 'commissioning', label: 'Commissioning · SIT' },
+  { id: 'settings', label: 'Nutrient Settings' },
+  { id: 'schedule', label: 'Schedule' },
   { id: 'builder', label: 'Experiment Builder' },
   { id: 'inputs', label: 'Input Registry' },
   { id: 'market', label: 'Market Feed' },

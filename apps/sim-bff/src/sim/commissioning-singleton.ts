@@ -5,9 +5,15 @@
 import {
   type CommissionTarget,
   CommissioningModel,
+  type RigConfig,
   type RigSnapshot,
   type Verdict,
 } from '@via-farm-lab/sim-models';
+
+import { getSettingsStore } from '../storage/settingsStore';
+
+/** Settings scope key for a rig's nutrient config. */
+export const nutrientScope = (rigId: string): string => `nutrient:${rigId}`;
 
 /** The one pilot reservoir we ship commissioning for. */
 const DEFAULT_RIG = {
@@ -75,6 +81,37 @@ export function resetRig(rigId: string, nowMs: number): RigSnapshot | undefined 
 
 export function rigVerdicts(rigId: string, nowMs: number): Verdict[] {
   return model().verdicts(rigId, nowMs);
+}
+
+// ── Nutrient settings (the "양액 설정") ──────────────────────────────────────
+
+/** Effective config for a rig (defaults merged with any runtime overrides). */
+export function rigConfig(rigId: string): RigConfig | undefined {
+  return model().has(rigId) ? model().config(rigId) : undefined;
+}
+
+/** Effective nutrient settings for every rig, for the WS snapshot. */
+export function nutrientSettings(): { scope: string; config: RigConfig }[] {
+  const m = model();
+  return m.ids().map((id) => ({ scope: nutrientScope(id), config: m.config(id) }));
+}
+
+/** Apply + persist a partial nutrient config override. Returns the new config. */
+export function configureRig(rigId: string, patch: Record<string, number>): RigConfig | undefined {
+  const next = model().configure(rigId, patch);
+  if (!next) return undefined;
+  getSettingsStore().put(nutrientScope(rigId), patch);
+  return next;
+}
+
+/** On startup, replay persisted overrides into the model. */
+export function hydrateSettings(): void {
+  const m = model();
+  for (const { scope, value } of getSettingsStore().list()) {
+    if (!scope.startsWith('nutrient:')) continue;
+    const rigId = scope.slice('nutrient:'.length);
+    if (m.has(rigId)) m.configure(rigId, value);
+  }
 }
 
 export function resetCommissioningForTests(): void {

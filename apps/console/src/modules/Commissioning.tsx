@@ -4,7 +4,7 @@ import { Chip } from '../components/Chip';
 import { Clickable } from '../components/Clickable';
 import { cardStyle, insetStyle, PageHeader } from '../components/Page';
 import { C, CHIP, type ChipKind, FONT_MONO, FONT_UI } from '../data/derive';
-import { type Rig, type Signal, useCommissioning, type Verdict } from '../sim/useCommissioning';
+import { type Rig, type Signal, useCommissioning, type Verdict } from '@via-farm-lab/data';
 
 const RIG_ID = 'pilot.syd.a';
 const SIGNAL_CHIP: Record<Signal, ChipKind> = {

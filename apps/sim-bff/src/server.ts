@@ -15,6 +15,9 @@ import { metricsRoutes } from './routes/metrics';
 import { nutrientRoutes } from './routes/nutrient';
 import { observationRoutes } from './routes/observations';
 import { scenarioRoutes } from './routes/scenarios';
+import { scheduleRoutes } from './routes/schedules';
+import { sensorRoutes } from './routes/sensors';
+import { settingsRoutes } from './routes/settings';
 import { simRoutes } from './routes/sim';
 
 export interface BuildServerOptions {
@@ -61,6 +64,9 @@ export async function buildServer(opts: BuildServerOptions): Promise<FastifyInst
   await app.register(anomalyRoutes);
   await app.register(nutrientRoutes);
   await app.register(commissioningRoutes);
+  await app.register(settingsRoutes);
+  await app.register(sensorRoutes);
+  await app.register(scheduleRoutes);
 
   app.get('/', () => ({ service: 'via-farm-lab/sim-bff', status: 'ok' }));
 

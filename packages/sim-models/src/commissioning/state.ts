@@ -80,6 +80,34 @@ export const COMMISSION_PARAMS = {
   defaultAbRatio: 1,
 } as const;
 
+/** Per-rig tunable config — the "양액 설정". Defaults to COMMISSION_PARAMS but
+ *  overridable at runtime via the settings store (CommissioningModel.configure). */
+export interface RigConfig {
+  readonly flowRateLmin: number;
+  readonly pumpPowerW: number;
+  readonly baselinePowerW: number;
+  readonly ecK: number;
+  readonly baseVolumeL: number;
+  readonly tauSec: number;
+  readonly settleHoldSec: number;
+  readonly ecTol: number;
+  readonly phTol: number;
+  readonly defaultAbRatio: number;
+}
+
+export const DEFAULT_RIG_CONFIG: RigConfig = {
+  flowRateLmin: COMMISSION_PARAMS.flowRateLmin,
+  pumpPowerW: COMMISSION_PARAMS.pumpPowerW,
+  baselinePowerW: COMMISSION_PARAMS.baselinePowerW,
+  ecK: COMMISSION_PARAMS.ecK,
+  baseVolumeL: COMMISSION_PARAMS.baseVolumeL,
+  tauSec: COMMISSION_PARAMS.tauSec,
+  settleHoldSec: COMMISSION_PARAMS.settleHoldSec,
+  ecTol: COMMISSION_PARAMS.ecTol,
+  phTol: COMMISSION_PARAMS.phTol,
+  defaultAbRatio: COMMISSION_PARAMS.defaultAbRatio,
+};
+
 export function makeRig(
   id: string,
   label: string,

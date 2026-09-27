@@ -4,6 +4,8 @@ export type ModuleId =
   | 'analytics'
   | 'report'
   | 'commissioning'
+  | 'settings'
+  | 'schedule'
   | 'builder'
   | 'inputs'
   | 'market'

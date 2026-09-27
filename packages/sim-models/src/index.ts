@@ -12,12 +12,14 @@ export {
   type MultiMetricState,
 } from './biomass';
 export { expectedEC, expectedPH, recipeForTarget } from './commissioning/mixing';
-export { CommissioningModel, type RigSnapshot } from './commissioning/model';
+export { CommissioningModel, type RigActuals, type RigSnapshot } from './commissioning/model';
 export {
   COMMISSION_PARAMS,
+  DEFAULT_RIG_CONFIG,
   makeRig,
   type CommissionTarget,
   type Recipe,
+  type RigConfig,
   type RigState,
   type Signal,
   type Verdict,

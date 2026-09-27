@@ -17,6 +17,10 @@ const ConfigSchema = z.object({
 
   /** CORS allow-list. Comma-separated origins. `*` allows all in dev. */
   CORS_ORIGINS: z.string().default('*'),
+
+  /** Telemetry source: `sim` reads the in-process simulator; `backend` reads
+   *  the real integration middleware (backend.yaml). Only `sim` is wired today. */
+  DEVICE_SOURCE: z.enum(['sim', 'backend']).default('sim'),
 });
 
 export type AppConfig = z.infer<typeof ConfigSchema>;

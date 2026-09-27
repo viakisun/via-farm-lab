@@ -5,13 +5,9 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 
+import { commissioningView, rigView } from '../devices/telemetry';
 import { getSimClock } from '../sim/clock-singleton';
-import {
-  commandRig,
-  commissioningSnapshot,
-  getCommissioningModel,
-  resetRig,
-} from '../sim/commissioning-singleton';
+import { commandRig, resetRig } from '../sim/commissioning-singleton';
 
 const CommandBody = z.object({
   targetEC: z.number().positive().finite(),
@@ -37,11 +33,11 @@ const notFound = (detail: string) => ({
 export const commissioningRoutes: FastifyPluginAsync = (app) => {
   const now = (): number => getSimClock().getSimTimeMs();
 
-  app.get('/commissioning', () => commissioningSnapshot(now()));
+  app.get('/commissioning', () => commissioningView(now()));
 
   app.get('/commissioning/:rigId', (req, reply) => {
     const { rigId } = req.params as { rigId: string };
-    const snap = getCommissioningModel().snapshot(rigId, now());
+    const snap = rigView(rigId, now());
     if (!snap) {
       void reply.status(404).send(notFound(`rig ${rigId} not found`));
       return;
@@ -57,27 +53,22 @@ export const commissioningRoutes: FastifyPluginAsync = (app) => {
       return;
     }
     const b = parsed.data;
-    const snap = commandRig(
-      rigId,
-      { EC: b.targetEC, pH: b.targetPH, abRatio: b.abRatio ?? 1 },
-      now(),
-      b.volumeL,
-    );
-    if (!snap) {
+    const ok = commandRig(rigId, { EC: b.targetEC, pH: b.targetPH, abRatio: b.abRatio ?? 1 }, now(), b.volumeL);
+    if (!ok) {
       void reply.status(404).send(notFound(`rig ${rigId} not found`));
       return;
     }
-    return snap;
+    return rigView(rigId, now());
   });
 
   app.post('/commissioning/:rigId/reset', (req, reply) => {
     const { rigId } = req.params as { rigId: string };
-    const snap = resetRig(rigId, now());
-    if (!snap) {
+    const ok = resetRig(rigId, now());
+    if (!ok) {
       void reply.status(404).send(notFound(`rig ${rigId} not found`));
       return;
     }
-    return snap;
+    return rigView(rigId, now());
   });
 
   return Promise.resolve();

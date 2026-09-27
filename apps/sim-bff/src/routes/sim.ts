@@ -19,11 +19,16 @@ import { z } from 'zod';
 
 import { hourOfDay, lightIntensityFactor } from '@via-farm-lab/sim-models';
 
+import { tickIngest } from '../devices/ingest';
+import { commissioningView } from '../devices/telemetry';
 import { getSimClock } from '../sim/clock-singleton';
-import { commissioningSnapshot, tickCommissioning } from '../sim/commissioning-singleton';
+import { getSensorStore } from '../storage/sensorStore';
+import { hydrateSettings, nutrientSettings, tickCommissioning } from '../sim/commissioning-singleton';
 import { hydrateRunningExperiments, poolStateFor, tickExperiments } from '../sim/experiment-runner';
 import { getMultiFactorModel } from '../sim/multi-factor-singleton';
 import { getBiomassModel } from '../sim/plants-singleton';
+import { tickScheduler } from '../sim/scheduler';
+import { getScheduleStore } from '../storage/scheduleStore';
 
 /** How often (in ticks) to broadcast a full biomass snapshot.
  *  At the 60 Hz tick cadence this caps plant updates at ~10 Hz, which is
@@ -69,9 +74,33 @@ interface StreamMessage {
     | 'heartbeat'
     | 'plants'
     | 'multi-metric'
-    | 'commissioning';
+    | 'commissioning'
+    | 'settings'
+    | 'sensors'
+    | 'schedules';
   readonly at: string;
   readonly payload: unknown;
+}
+
+/** Connected stream clients, for event-driven broadcasts (settings/schedule
+ *  changes) that don't wait for the next tick. */
+const clients = new Set<WebSocket>();
+
+function broadcastAll(msg: StreamMessage): void {
+  const data = JSON.stringify(msg);
+  for (const s of clients) {
+    if (s.readyState === s.OPEN) s.send(data);
+  }
+}
+
+/** Push the current nutrient settings to every client (called on PUT). */
+export function broadcastSettings(): void {
+  broadcastAll({ type: 'settings', at: new Date().toISOString(), payload: nutrientSettings() });
+}
+
+/** Push the current schedule jobs to every client (called on CRUD). */
+export function broadcastSchedules(): void {
+  broadcastAll({ type: 'schedules', at: new Date().toISOString(), payload: getScheduleStore().list() });
 }
 
 interface MultiMetricSnapshot {
@@ -148,8 +177,9 @@ function snapshotClock(): ClockState & {
 }
 
 export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
-  // Re-hydrate running experiments into the multi-factor model on startup.
+  // Re-hydrate running experiments + persisted settings into the sim on startup.
   hydrateRunningExperiments();
+  hydrateSettings();
 
   // ── REST ──────────────────────────────────────────────────────────────
   app.get('/sim/clock', (): ClockState => snapshotClock());
@@ -213,6 +243,7 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
   // ── WebSocket ─────────────────────────────────────────────────────────
   app.get('/sim/stream', { websocket: true }, (socket: WebSocket) => {
     const clock = getSimClock();
+    clients.add(socket);
 
     // Send snapshot on connect so the client can render before the first tick.
     const send = (msg: StreamMessage): void => {
@@ -241,14 +272,19 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
     send({
       type: 'commissioning',
       at: new Date().toISOString(),
-      payload: commissioningSnapshot(clock.getSimTimeMs()),
+      payload: commissioningView(clock.getSimTimeMs()),
     });
+    send({ type: 'settings', at: new Date().toISOString(), payload: nutrientSettings() });
+    send({ type: 'sensors', at: new Date().toISOString(), payload: tickIngest(clock.getSimTimeMs()) });
+    send({ type: 'schedules', at: new Date().toISOString(), payload: getScheduleStore().list() });
 
     const onTick = (e: TickEvent): void => {
       // Always advance the models — keeps biomass, pools & commissioning rigs
       // in sync with sim time even on ticks we choose not to broadcast.
       tickExperiments(e.simTimeMs);
       tickCommissioning(e.simTimeMs);
+      tickIngest(e.simTimeMs);
+      tickScheduler(e.simTimeMs);
       const broadcastTick = e.tick % TICK_BROADCAST_EVERY_TICKS === 0;
       const broadcastSnapshot = e.tick % BIOMASS_BROADCAST_EVERY_TICKS === 0;
       if (broadcastTick) {
@@ -272,7 +308,12 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
         send({
           type: 'commissioning',
           at: new Date(e.wallTimeMs).toISOString(),
-          payload: commissioningSnapshot(e.simTimeMs),
+          payload: commissioningView(e.simTimeMs),
+        });
+        send({
+          type: 'sensors',
+          at: new Date(e.wallTimeMs).toISOString(),
+          payload: getSensorStore().getLatest(),
         });
       }
     };
@@ -308,6 +349,7 @@ export const simRoutes: FastifyPluginAsync = (app: FastifyInstance) => {
     }, 30_000);
 
     socket.on('close', () => {
+      clients.delete(socket);
       clearInterval(heartbeat);
       clock.off('tick', onTick);
       clock.off('status', onStatus);
